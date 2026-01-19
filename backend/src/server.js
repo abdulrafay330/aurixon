@@ -10,6 +10,10 @@ import dotenv from 'dotenv';
 // Import routes
 import authRoutes from './routes/authRoutes.js';
 import companyRoutes from './routes/companyRoutes.js';
+import reportingPeriodRoutes from './routes/reportingPeriodRoutes.js';
+import activityRoutes from './routes/activityRoutes.js';
+import boundaryRoutes from './routes/boundaryRoutes.js';
+import referenceRoutes from './routes/referenceRoutes.js';
 
 // Import middleware
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
@@ -77,6 +81,9 @@ app.get('/health', (req, res) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/companies', companyRoutes);
+app.use('/api/companies/:companyId/reporting-periods', reportingPeriodRoutes);
+app.use('/api/companies/:companyId/activities', activityRoutes);
+app.use('/api/reference', referenceRoutes);
 
 // ========================================================================
 // ERROR HANDLING
@@ -98,19 +105,6 @@ app.listen(PORT, () => {
 ║  Port:               ${String(PORT).padEnd(39)}║
 ║  URL:                http://localhost:${String(PORT).padEnd(25)}║
 ║                                                                ║
-║  Available endpoints:                                          ║
-║  - POST   /api/auth/register                                 ║
-║  - POST   /api/auth/login                                    ║
-║  - POST   /api/auth/company/signup                           ║
-║  - GET    /api/auth/me                                       ║
-║  - GET    /api/companies/:companyId                          ║
-║  - PUT    /api/companies/:companyId                          ║
-║  - GET    /api/companies/:companyId/users                    ║
-║  - POST   /api/companies/:companyId/users                    ║
-║  - PUT    /api/companies/:companyId/users/:userId            ║
-║  - DELETE /api/companies/:companyId/users/:userId            ║
-║                                                                ║
-║  Database: PostgreSQL (raw SQL queries)                       ║
 ╚════════════════════════════════════════════════════════════════╝
   `);
 });
