@@ -21,21 +21,21 @@ const router = Router();
  * Get company details
  * @requires auth + VIEWER role in company
  */
-router.get('/:companyId', authMiddleware, requireRole('VIEWER'), getCompany);
+router.get('/:companyId', authMiddleware, requireRole(['viewer']), getCompany);
 
 /**
  * PUT /companies/:companyId
  * Update company details
  * @requires auth + COMPANY_ADMIN role in company
  */
-router.put('/:companyId', authMiddleware, requireRole('COMPANY_ADMIN'), updateCompany);
+router.put('/:companyId', authMiddleware, requireRole(['company_admin']), updateCompany);
 
 /**
  * GET /companies/:companyId/users
  * List all users in company
  * @requires auth + VIEWER role in company
  */
-router.get('/:companyId/users', authMiddleware, requireRole('VIEWER'), listCompanyUsers);
+router.get('/:companyId/users', authMiddleware, requireRole(['viewer']), listCompanyUsers);
 
 /**
  * POST /companies/:companyId/users
@@ -43,7 +43,7 @@ router.get('/:companyId/users', authMiddleware, requireRole('VIEWER'), listCompa
  * @requires auth + COMPANY_ADMIN role in company
  * @body { email, role }
  */
-router.post('/:companyId/users', authMiddleware, requireRole('COMPANY_ADMIN'), inviteUserToCompany);
+router.post('/:companyId/users', authMiddleware, requireRole(['company_admin']), inviteUserToCompany);
 
 /**
  * PUT /companies/:companyId/users/:userId
@@ -54,7 +54,7 @@ router.post('/:companyId/users', authMiddleware, requireRole('COMPANY_ADMIN'), i
 router.put(
   '/:companyId/users/:userId',
   authMiddleware,
-  requireRole('COMPANY_ADMIN'),
+  requireRole(['company_admin']),
   updateUserRole
 );
 
@@ -66,7 +66,7 @@ router.put(
 router.delete(
   '/:companyId/users/:userId',
   authMiddleware,
-  requireRole('COMPANY_ADMIN'),
+  requireRole(['company_admin']),
   removeUserFromCompany
 );
 

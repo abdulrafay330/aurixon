@@ -40,37 +40,32 @@ export function authMiddleware(req, res, next) {
 
 /**
  * Middleware: Require specific role in a company context
- * @param {string} requiredRole - Role required (COMPANY_ADMIN, EDITOR, VIEWER, INTERNAL_ADMIN)
+ * @param {array|string} requiredRoles - Role(s) required (can be array or string)
  * @returns {Function} Middleware function
  */
-export function requireRole(requiredRole) {
+export function requireRole(requiredRoles) {
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // INTERNAL_ADMIN can access everything
-    // Check if user has internal_admin role in any of their roles
-    const isInternalAdmin = req.user.roles.some(r => r.role === 'internal_admin');
-    if (isInternalAdmin) {
-      return next();
-    }
+    // Normalize to array
+    const rolesArray = Array.isArray(requiredRoles) ? requiredRoles : [requiredRoles];
 
-    // Get company ID from params or body
-    const companyId = req.params.companyId || req.body.companyId;
+    // Get company ID from params
+    const companyId = req.params.companyId;
 
     if (!companyId) {
       return res.status(400).json({
         error: 'Missing company context',
-        message: 'companyId required in URL or body',
+        message: 'companyId required in URL',
       });
     }
 
-    // Find role for this specific company
-    const userRoleObj = req.user.roles.find(r => r.companyId === companyId);
-    const userRoleInCompany = userRoleObj ? userRoleObj.role : null;
+    // req.user.roles is an array: [{ companyId, role }, ...]
+    const userCompanyRole = req.user.roles.find(r => r.companyId === companyId);
 
-    if (!userRoleInCompany) {
+    if (!userCompanyRole) {
       return res.status(403).json({
         error: 'Access denied',
         message: `User has no role in company ${companyId}`,
@@ -79,25 +74,41 @@ export function requireRole(requiredRole) {
 
     // Check role hierarchy (lowercase)
     const roleHierarchy = {
-      viewer: 1,
-      editor: 2,
-      company_admin: 3,
-      internal_admin: 4,
+      'viewer': 1,
+      'editor': 2,
+      'company_admin': 3,
+      'internal_admin': 4,
     };
 
-    // Ensure requiredRole is lowercase for comparison
-    const requiredRoleLower = requiredRole.toLowerCase();
-
-    if (roleHierarchy[userRoleInCompany] < roleHierarchy[requiredRoleLower]) {
-      return res.status(403).json({
-        error: 'Insufficient permissions',
-        message: `Required role: ${requiredRoleLower}, but user is ${userRoleInCompany}`,
-      });
+    // If rolesArray is just a list of allowed roles, check if user's role is in that list
+    // If rolesArray has one element, enforce hierarchy (editor+ means editor, company_admin, internal_admin)
+    const userRoleLower = userCompanyRole.role.toLowerCase();
+    
+    if (rolesArray.length === 1) {
+      // Single role requirement - enforce hierarchy
+      const requiredLevel = roleHierarchy[rolesArray[0].toLowerCase()] || 0;
+      const userRoleLevel = roleHierarchy[userRoleLower] || 0;
+      
+      if (userRoleLevel < requiredLevel) {
+        return res.status(403).json({
+          error: 'Insufficient permissions',
+          message: `Required role: ${rolesArray[0]}, but user is ${userCompanyRole.role}`,
+        });
+      }
+    } else {
+      // Multiple roles - check if user's role is in the list
+      const normalizedRoles = rolesArray.map(r => r.toLowerCase());
+      if (!normalizedRoles.includes(userRoleLower)) {
+        return res.status(403).json({
+          error: 'Insufficient permissions',
+          message: `Required role: ${rolesArray.join(' or ')}, but user is ${userCompanyRole.role}`,
+        });
+      }
     }
 
     // Store the company context
     req.companyId = companyId;
-    req.userRole = userRoleInCompany;
+    req.userRole = userCompanyRole.role;
 
     next();
   };
@@ -111,9 +122,7 @@ export function requireInternalAdmin(req, res, next) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  const isInternalAdmin = req.user.roles.some(r => r.role === 'internal_admin');
-
-  if (!isInternalAdmin) {
+  if (!req.user.roles.INTERNAL_ADMIN) {
     return res.status(403).json({
       error: 'Access denied',
       message: 'This endpoint requires Internal Admin role',

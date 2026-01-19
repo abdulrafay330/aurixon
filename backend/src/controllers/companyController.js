@@ -19,7 +19,7 @@ export async function getCompany(req, res, next) {
 
     // Get company info
     const company = await queryOne(
-      'SELECT id, name, country, industry, created_at FROM companies WHERE id = $1',
+      'SELECT id, name, country_code, industry, created_at FROM companies WHERE id = $1',
       [companyId]
     );
 
@@ -115,7 +115,7 @@ export async function updateCompany(req, res, next) {
 export async function inviteUserToCompany(req, res, next) {
   try {
     const { companyId } = req.params;
-    const { email, role } = req.body;
+    let { email, role } = req.body;
     const invitedByUserId = req.user.userId;
 
     // Validate input
@@ -123,6 +123,9 @@ export async function inviteUserToCompany(req, res, next) {
       return res.status(400).json({ error: 'Email and role required' });
     }
 
+    // Normalize role to lowercase to match DB enum
+    role = role.toLowerCase();
+    
     const validRoles = ['company_admin', 'editor', 'viewer'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
@@ -217,7 +220,7 @@ export async function updateUserRole(req, res, next) {
       return res.status(400).json({ error: 'Role is required' });
     }
 
-    const validRoles = ['company_admin', 'editor', 'viewer'];
+    const validRoles = ['COMPANY_ADMIN', 'EDITOR', 'VIEWER'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         error: `Role must be one of: ${validRoles.join(', ')}`,
@@ -226,10 +229,10 @@ export async function updateUserRole(req, res, next) {
 
     const now = new Date();
     const updatedRole = await queryOne(
-      `UPDATE user_company_roles SET role = $1 
-       WHERE user_id = $2 AND company_id = $3 
+      `UPDATE user_company_roles SET role = $1, updated_at = $2 
+       WHERE user_id = $3 AND company_id = $4 
        RETURNING id, user_id, company_id, role`,
-      [role, userId, companyId]
+      [role, now, userId, companyId]
     );
 
     if (!updatedRole) {
@@ -257,7 +260,7 @@ export async function removeUserFromCompany(req, res, next) {
     // Check if user is the last COMPANY_ADMIN
     const adminCount = await queryOne(
       'SELECT COUNT(*) as count FROM user_company_roles WHERE company_id = $1 AND role = $2',
-      [companyId, 'company_admin']
+      [companyId, 'COMPANY_ADMIN']
     );
 
     const userRole = await queryOne(
@@ -269,7 +272,7 @@ export async function removeUserFromCompany(req, res, next) {
       return res.status(404).json({ error: 'User role not found' });
     }
 
-    if (adminCount.count === 1 && userRole.role === 'company_admin') {
+    if (adminCount.count === 1 && userRole.role === 'COMPANY_ADMIN') {
       return res.status(400).json({
         error: 'Cannot remove the last Company Admin from the company',
       });

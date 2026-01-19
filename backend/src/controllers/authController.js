@@ -206,7 +206,7 @@ export async function signupCompany(req, res, next) {
       [uuidv4(), userId, companyId, 'company_admin', now]
     );
 
-    // Insert locale settings (default to EN)
+    // Insert locale settings (default to EN, UTC)
     await execute(
       `INSERT INTO locale_settings 
        (id, company_id, language, timezone, created_at, updated_at) 
@@ -232,7 +232,7 @@ export async function signupCompany(req, res, next) {
         company: {
           id: companyId,
           name: companyName,
-          role: 'COMPANY_ADMIN',
+          role: 'company_admin',
         },
       },
     });
