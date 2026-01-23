@@ -9,7 +9,6 @@
     "dev": "nodemon src/server.js",
     "db:init": "psql -U postgres -d aurixon_db -f db/schema.sql",
     "db:reset": "psql -U postgres -d aurixon_db -c \"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\" && npm run db:init",
-    "db:load-eea": "psql -U postgres -d aurixon_db -f db/eea_emission_factors_2024.sql",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
   },
