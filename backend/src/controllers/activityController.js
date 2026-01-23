@@ -36,6 +36,8 @@ function getTableName(activityType) {
 export async function createActivity(req, res, next) {
   try {
     const { activityType } = req.params;
+    // Convert hyphenated URLs to underscore format (stationary-combustion -> stationary_combustion)
+    const normalizedActivityType = activityType.replace(/-/g, '_');
     // Accept both camelCase and snake_case for reporting period ID
     const reportingPeriodId = req.body.reportingPeriodId || req.body.reporting_period_id;
     const { reportingPeriodId: _, reporting_period_id: __, ...activityData } = req.body;
@@ -43,7 +45,7 @@ export async function createActivity(req, res, next) {
     const companyId = req.params.companyId;
 
     // Validate activity data
-    const validation = validateActivity(activityType, activityData);
+    const validation = validateActivity(normalizedActivityType, activityData);
     if (!validation.valid) {
       return res.status(400).json({
         error: 'Validation failed',
@@ -51,9 +53,9 @@ export async function createActivity(req, res, next) {
       });
     }
 
-    const tableName = getTableName(activityType);
+    const tableName = getTableName(normalizedActivityType);
     if (!tableName) {
-      return res.status(400).json({ error: `Unknown activity type: ${activityType}` });
+      return res.status(400).json({ error: `Unknown activity type: ${normalizedActivityType}` });
     }
 
     const id = uuidv4();
@@ -128,12 +130,14 @@ export async function getActivity(req, res, next) {
 export async function listActivities(req, res, next) {
   try {
     const { activityType } = req.params;
+    // Convert hyphenated URLs to underscore format
+    const normalizedActivityType = activityType.replace(/-/g, '_');
     const { reportingPeriodId } = req.query;
     const companyId = req.params.companyId;
 
-    const tableName = getTableName(activityType);
+    const tableName = getTableName(normalizedActivityType);
     if (!tableName) {
-      return res.status(400).json({ error: `Unknown activity type: ${activityType}` });
+      return res.status(400).json({ error: `Unknown activity type: ${normalizedActivityType}` });
     }
 
     let query = `SELECT * FROM ${tableName} WHERE company_id = $1`;
@@ -149,7 +153,7 @@ export async function listActivities(req, res, next) {
     const activities = await queryAll(query, values);
 
     res.json({
-      activityType,
+      activityType: normalizedActivityType,
       count: activities.length,
       activities,
     });
