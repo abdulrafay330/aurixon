@@ -14,6 +14,14 @@ import reportingPeriodRoutes from './routes/reportingPeriodRoutes.js';
 import activityRoutes from './routes/activityRoutes.js';
 import boundaryRoutes from './routes/boundaryRoutes.js';
 import referenceRoutes from './routes/referenceRoutes.js';
+import calculationRoutes from './routes/calculationRoutes.js';
+import reportingRoutes from './routes/reportingRoutes.js';
+import exportRoutes from './routes/exportRoutes.js';
+import approvalRoutes from './routes/approvalRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
+import paymentRoutes from './routes/paymentRoutes.js';
+import translationRoutes from './routes/translationRoutes.js';
+import csrdRoutes from './routes/csrdRoutes.js';
 
 // Import middleware
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
@@ -32,7 +40,13 @@ const NODE_ENV = process.env.NODE_ENV || 'development';
 // MIDDLEWARE
 // ========================================================================
 
-// Body parsing
+// Webhook route needs raw body for Stripe signature verification
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }), (req, res, next) => {
+  req.rawBody = req.body;
+  next();
+});
+
+// Body parsing for all other routes
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
@@ -83,7 +97,15 @@ app.use('/api/auth', authRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/companies/:companyId/reporting-periods', reportingPeriodRoutes);
 app.use('/api/companies/:companyId/activities', activityRoutes);
+app.use('/api/companies/:companyId/calculations', calculationRoutes);
 app.use('/api/reference', referenceRoutes);
+app.use('/api/reports', reportingRoutes);
+app.use('/api/exports', exportRoutes);
+app.use('/api/approvals', approvalRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/translations', translationRoutes);
+app.use('/api/csrd', csrdRoutes);
 
 // ========================================================================
 // ERROR HANDLING
@@ -96,8 +118,12 @@ app.use(errorHandler);
 // START SERVER
 // ========================================================================
 
-app.listen(PORT, () => {
-  console.log(`
+// Store server instance for testing
+let server;
+
+if (process.env.NODE_ENV !== 'test') {
+  server = app.listen(PORT, () => {
+    console.log(`
 ╔════════════════════════════════════════════════════════════════╗
 ║                  AURIXON BACKEND API                          ║
 ║                                                                ║
@@ -106,7 +132,11 @@ app.listen(PORT, () => {
 ║  URL:                http://localhost:${String(PORT).padEnd(25)}║
 ║                                                                ║
 ╚════════════════════════════════════════════════════════════════╝
-  `);
-});
+    `);
+  });
+}
+
+// Export app and server for testing
+app.server = server;
 
 export default app;
