@@ -7,7 +7,8 @@
   "scripts": {
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
-    "db:init": "psql -U postgres -d aurixon_db -f db/schema.sql",
+    "db:init": "npm run db:setup",
+    "db:setup": "node scripts/setup-db.js",
     "db:reset": "psql -U postgres -d aurixon_db -c \"DROP SCHEMA public CASCADE; CREATE SCHEMA public;\" && npm run db:init",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch"
@@ -22,7 +23,10 @@
   "author": "AURIXON",
   "license": "PROPRIETARY",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^2.4.3",
+    "chart.js": "^4.5.1",
+    "chartjs-node-canvas": "^5.0.0",
     "cors": "^2.8.5",
     "csv-writer": "^1.6.0",
     "dotenv": "^16.3.1",

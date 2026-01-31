@@ -6,33 +6,47 @@ import LanguageSwitcher from '../common/LanguageSwitcher';
  * Header Component
  * Main navigation bar with AURIXON branding
  */
-const Header = () => {
+const Header = ({ onMenuClick, showMenuButton }) => {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
   };
 
   return (
     <header className="bg-midnight-navy text-white shadow-lg sticky top-0 z-50">
       <nav className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 flex-wrap sm:flex-nowrap gap-2">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity">
-            <img 
-              src="/aurixon_logo.png" 
-              alt="AURIXON" 
-              className="h-8 sm:h-10 w-auto"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
-            <span className="text-xl sm:text-2xl font-heading font-bold">
-              AURIX<span className="text-growth-green">ON</span>
-            </span>
-          </Link>
+          
+          <div className="flex items-center gap-2">
+            {/* Mobile Menu Button */}
+            {showMenuButton && (
+              <button
+                onClick={onMenuClick}
+                className="lg:hidden p-2 text-white hover:text-cyan-mist transition-colors rounded-lg hover:bg-white/10"
+                aria-label="Toggle menu"
+              >
+                <span className="text-xl">☰</span>
+              </button>
+            )}
+
+            {/* Logo */}
+            <Link to="/" className="flex items-center gap-2 sm:gap-3 hover:opacity-90 transition-opacity">
+              <img 
+                src="/aurixon_logo.png" 
+                alt="AURIXON" 
+                className="h-8 sm:h-10 w-auto"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+              <span className="text-xl sm:text-2xl font-heading font-bold">
+                AURIX<span className="text-growth-green">ON</span>
+              </span>
+            </Link>
+          </div>
 
           {/* User Menu - Desktop Only */}
           {isAuthenticated && (

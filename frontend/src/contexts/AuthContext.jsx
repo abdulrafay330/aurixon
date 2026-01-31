@@ -147,6 +147,7 @@ export const AuthProvider = ({ children }) => {
     return roles.includes(user?.role);
   };
 
+
   const value = {
     user,
     isAuthenticated,
@@ -157,9 +158,8 @@ export const AuthProvider = ({ children }) => {
     updateUser,
     hasRole,
     hasAnyRole,
+    hasPermission: () => true, // MVP: Allow all actions for now until granular permissions are implemented
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-
-export default AuthContext;

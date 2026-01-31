@@ -56,7 +56,7 @@ export async function getCompany(req, res, next) {
 export async function updateCompany(req, res, next) {
   try {
     const { companyId } = req.params;
-    const { name, country, industry } = req.body;
+    const { name, country_code, industry } = req.body;
     const now = new Date();
 
     // Build dynamic UPDATE query
@@ -69,9 +69,9 @@ export async function updateCompany(req, res, next) {
       values.push(name);
       paramIndex++;
     }
-    if (country !== undefined) {
-      updates.push(`country = $${paramIndex}`);
-      values.push(country);
+    if (country_code !== undefined) {
+      updates.push(`country_code = $${paramIndex}`);
+      values.push(country_code);
       paramIndex++;
     }
     if (industry !== undefined) {
@@ -214,25 +214,25 @@ export async function listCompanyUsers(req, res, next) {
 export async function updateUserRole(req, res, next) {
   try {
     const { companyId, userId } = req.params;
-    const { role } = req.body;
+    let { role } = req.body;
 
     if (!role) {
       return res.status(400).json({ error: 'Role is required' });
     }
 
-    const validRoles = ['COMPANY_ADMIN', 'EDITOR', 'VIEWER'];
+    role = role.toLowerCase();
+    const validRoles = ['company_admin', 'editor', 'viewer'];
     if (!validRoles.includes(role)) {
       return res.status(400).json({
         error: `Role must be one of: ${validRoles.join(', ')}`,
       });
     }
 
-    const now = new Date();
     const updatedRole = await queryOne(
-      `UPDATE user_company_roles SET role = $1, updated_at = $2 
-       WHERE user_id = $3 AND company_id = $4 
+      `UPDATE user_company_roles SET role = $1
+       WHERE user_id = $2 AND company_id = $3 
        RETURNING id, user_id, company_id, role`,
-      [role, now, userId, companyId]
+      [role, userId, companyId]
     );
 
     if (!updatedRole) {

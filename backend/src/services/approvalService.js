@@ -84,7 +84,7 @@ export async function submitForApproval(periodId, submittedBy, reviewerId = null
         await emailService.sendApprovalNotification(
           reviewer.email,
           {
-            periodName: period.period_name,
+            periodName: period.period_label,
             companyName: period.company_name,
             submittedBy: submitterQuery.rows[0]?.name || 'Unknown'
           },
@@ -99,7 +99,7 @@ export async function submitForApproval(periodId, submittedBy, reviewerId = null
           [
             workflow.id, 
             reviewerId, 
-            `New approval request for ${period.period_name}`
+            `New approval request for ${period.period_label}`
           ]
         );
       }
@@ -130,7 +130,7 @@ export async function approveWorkflow(workflowId, approvedBy, comments = null) {
 
     // Get workflow
     const workflowQuery = await client.query(
-      `SELECT w.*, rp.period_name, c.name as company_name 
+      `SELECT w.*, rp.period_label, c.name as company_name 
        FROM approval_workflows w
        JOIN reporting_periods rp ON w.reporting_period_id = rp.id
        JOIN companies c ON w.company_id = c.id
@@ -183,16 +183,16 @@ export async function approveWorkflow(workflowId, approvedBy, comments = null) {
 
     if (submitterQuery.rows.length > 0) {
       const approverQuery = await client.query(
-        'SELECT name FROM users WHERE id = $1',
+        'SELECT first_name, last_name FROM users WHERE id = $1',
         [approvedBy]
       );
 
       await emailService.sendApprovalNotification(
         submitterQuery.rows[0].email,
         {
-          periodName: workflow.period_name,
+          periodName: workflow.period_label,
           companyName: workflow.company_name,
-          reviewerName: approverQuery.rows[0]?.name || 'Unknown',
+          reviewerName: `${approverQuery.rows[0]?.first_name || ''} ${approverQuery.rows[0]?.last_name || ''}`.trim() || 'Unknown',
           comments
         },
         'approved'
@@ -203,7 +203,7 @@ export async function approveWorkflow(workflowId, approvedBy, comments = null) {
         `INSERT INTO approval_notifications 
          (workflow_id, user_id, notification_type, message)
          VALUES ($1, $2, 'approved', $3)`,
-        [workflowId, workflow.submitted_by, `Your report for ${workflow.period_name} has been approved`]
+        [workflowId, workflow.submitted_by, `Your report for ${workflow.period_label} has been approved`]
       );
     }
 
@@ -236,7 +236,7 @@ export async function rejectWorkflow(workflowId, rejectedBy, reason) {
 
     // Get workflow
     const workflowQuery = await client.query(
-      `SELECT w.*, rp.period_name, c.name as company_name 
+      `SELECT w.*, rp.period_label, c.name as company_name 
        FROM approval_workflows w
        JOIN reporting_periods rp ON w.reporting_period_id = rp.id
        JOIN companies c ON w.company_id = c.id
@@ -284,16 +284,16 @@ export async function rejectWorkflow(workflowId, rejectedBy, reason) {
 
     if (submitterQuery.rows.length > 0) {
       const rejecterQuery = await client.query(
-        'SELECT name FROM users WHERE id = $1',
+        'SELECT first_name, last_name FROM users WHERE id = $1',
         [rejectedBy]
       );
 
       await emailService.sendApprovalNotification(
         submitterQuery.rows[0].email,
         {
-          periodName: workflow.period_name,
+          periodName: workflow.period_label,
           companyName: workflow.company_name,
-          reviewerName: rejecterQuery.rows[0]?.name || 'Unknown',
+          reviewerName: `${rejecterQuery.rows[0]?.first_name || ''} ${rejecterQuery.rows[0]?.last_name || ''}`.trim() || 'Unknown',
           comments: reason
         },
         'rejected'
@@ -304,7 +304,7 @@ export async function rejectWorkflow(workflowId, rejectedBy, reason) {
         `INSERT INTO approval_notifications 
          (workflow_id, user_id, notification_type, message)
          VALUES ($1, $2, 'rejected', $3)`,
-        [workflowId, workflow.submitted_by, `Changes requested for ${workflow.period_name}`]
+        [workflowId, workflow.submitted_by, `Changes requested for ${workflow.period_label}`]
       );
     }
 
@@ -352,7 +352,7 @@ export async function addComment(workflowId, userId, commentText, commentType = 
 
     // Get workflow for notifications
     const workflowQuery = await client.query(
-      `SELECT w.*, rp.period_name, c.name as company_name 
+      `SELECT w.*, rp.period_label, c.name as company_name 
        FROM approval_workflows w
        JOIN reporting_periods rp ON w.reporting_period_id = rp.id
        JOIN companies c ON w.company_id = c.id
@@ -370,7 +370,7 @@ export async function addComment(workflowId, userId, commentText, commentType = 
       }
 
       const commenterQuery = await client.query(
-        'SELECT name FROM users WHERE id = $1',
+        'SELECT first_name, last_name FROM users WHERE id = $1',
         [userId]
       );
 
@@ -385,9 +385,9 @@ export async function addComment(workflowId, userId, commentText, commentType = 
             await emailService.sendApprovalNotification(
               userQuery.rows[0].email,
               {
-                periodName: workflow.period_name,
+                periodName: workflow.period_label,
                 companyName: workflow.company_name,
-                reviewerName: commenterQuery.rows[0]?.name || 'Unknown',
+                reviewerName: `${commenterQuery.rows[0]?.first_name || ''} ${commenterQuery.rows[0]?.last_name || ''}`.trim() || 'Unknown',
                 comments: commentText
               },
               'commented'
@@ -398,7 +398,7 @@ export async function addComment(workflowId, userId, commentText, commentType = 
               `INSERT INTO approval_notifications 
                (workflow_id, user_id, notification_type, message)
                VALUES ($1, $2, 'comment_added', $3)`,
-              [workflowId, notifyUserId, `New comment on ${workflow.period_name}`]
+              [workflowId, notifyUserId, `New comment on ${workflow.period_label}`]
             );
           }
         }
@@ -423,12 +423,12 @@ export async function addComment(workflowId, userId, commentText, commentType = 
 export async function getWorkflowDetails(workflowId) {
   const workflowQuery = await pool.query(
     `SELECT w.*, 
-      rp.period_name, rp.start_date, rp.end_date,
+      rp.period_label, rp.period_start_date, rp.period_end_date,
       c.name as company_name,
-      u1.email as submitted_by_email, u1.name as submitted_by_name,
-      u2.email as reviewer_email, u2.name as reviewer_name,
-      u3.email as approved_by_email, u3.name as approved_by_name,
-      u4.email as rejected_by_email, u4.name as rejected_by_name
+      u1.email as submitted_by_email, (u1.first_name || ' ' || u1.last_name) as submitted_by_name,
+      u2.email as reviewer_email, (u2.first_name || ' ' || u2.last_name) as reviewer_name,
+      u3.email as approved_by_email, (u3.first_name || ' ' || u3.last_name) as approved_by_name,
+      u4.email as rejected_by_email, (u4.first_name || ' ' || u4.last_name) as rejected_by_name
      FROM approval_workflows w
      JOIN reporting_periods rp ON w.reporting_period_id = rp.id
      JOIN companies c ON w.company_id = c.id
@@ -448,7 +448,7 @@ export async function getWorkflowDetails(workflowId) {
 
   // Get comments
   const commentsQuery = await pool.query(
-    `SELECT c.*, u.email, u.name as user_name
+    `SELECT c.*, u.email, (u.first_name || ' ' || u.last_name) as user_name
      FROM approval_comments c
      LEFT JOIN users u ON c.user_id = u.id
      WHERE c.workflow_id = $1
@@ -458,7 +458,7 @@ export async function getWorkflowDetails(workflowId) {
 
   // Get history
   const historyQuery = await pool.query(
-    `SELECT h.*, u.email, u.name as user_name
+    `SELECT h.*, u.email, (u.first_name || ' ' || u.last_name) as user_name
      FROM approval_history h
      LEFT JOIN users u ON h.performed_by = u.id
      WHERE h.workflow_id = $1
@@ -481,9 +481,9 @@ export async function getWorkflowDetails(workflowId) {
  */
 export async function getCompanyWorkflows(companyId, status = null) {
   let query = `
-    SELECT w.*, rp.period_name, 
-      u1.name as submitted_by_name,
-      u2.name as reviewer_name
+    SELECT w.*, rp.period_label, 
+      (u1.first_name || ' ' || u1.last_name) as submitted_by_name,
+      (u2.first_name || ' ' || u2.last_name) as reviewer_name
     FROM approval_workflows w
     JOIN reporting_periods rp ON w.reporting_period_id = rp.id
     LEFT JOIN users u1 ON w.submitted_by = u1.id

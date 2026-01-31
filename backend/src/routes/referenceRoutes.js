@@ -8,6 +8,7 @@ import {
   getActivityTypesReference,
   getDropdownsReference,
   getDropdownByName,
+  getBoundaryQuestionsReference,
 } from '../controllers/referenceController.js';
 
 const router = Router();
@@ -23,6 +24,12 @@ router.get('/activity-types', getActivityTypesReference);
  * Get all dropdowns
  */
 router.get('/dropdowns', getDropdownsReference);
+
+/**
+ * GET /api/reference/boundary-questions
+ * Get all boundary questions
+ */
+router.get('/boundary-questions', getBoundaryQuestionsReference);
 
 /**
  * GET /api/reference/dropdowns/:name

@@ -14,14 +14,16 @@ export function authMiddleware(req, res, next) {
   const token = extractToken(authHeader);
 
   if (!token) {
+    console.log('❌ Auth failed: No token -', req.method, req.originalUrl);
     return res.status(401).json({
       error: 'No token provided',
       message: 'Missing or invalid Authorization header',
     });
   }
-
+  
   const payload = verifyToken(token);
   if (!payload) {
+    console.log('❌ Auth failed: Invalid token -', req.method, req.originalUrl);
     return res.status(401).json({
       error: 'Invalid token',
       message: 'Token is expired or malformed',
@@ -32,7 +34,10 @@ export function authMiddleware(req, res, next) {
   req.user = {
     userId: payload.userId,
     email: payload.email,
-    roles: payload.roles || [], // Array of { companyId, role }
+    roles: payload.roles || [], // Array of { company_id, role, company_name }
+    // Add primary company for convenience (first company in roles array)
+    companyId: payload.roles?.[0]?.company_id || null,
+    company_id: payload.roles?.[0]?.company_id || null, // Support both naming conventions
   };
 
   next();
@@ -62,8 +67,11 @@ export function requireRole(requiredRoles) {
       });
     }
 
-    // req.user.roles is an array: [{ companyId, role }, ...]
-    const userCompanyRole = req.user.roles.find(r => r.companyId === companyId);
+    // req.user.roles is an array: [{ company_id, role, company_name }, ...]
+    // Support both company_id (from DB) and companyId (legacy) for compatibility
+    const userCompanyRole = req.user.roles.find(r => 
+      r.companyId === companyId || r.company_id === companyId
+    );
 
     if (!userCompanyRole) {
       return res.status(403).json({
@@ -122,7 +130,12 @@ export function requireInternalAdmin(req, res, next) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  if (!req.user.roles.INTERNAL_ADMIN) {
+  // req.user.roles is an array: [{ company_id, role, company_name }, ...]
+  const isInternalAdmin = req.user.roles.some(r => 
+    r.role && r.role.toLowerCase() === 'internal_admin'
+  );
+
+  if (!isInternalAdmin) {
     return res.status(403).json({
       error: 'Access denied',
       message: 'This endpoint requires Internal Admin role',

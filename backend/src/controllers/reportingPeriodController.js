@@ -13,13 +13,22 @@ import { queryOne, queryAll, execute } from '../utils/db.js';
 export async function createReportingPeriod(req, res, next) {
   try {
     const { companyId } = req.params;
-    const { label, startDate, endDate, type, standard } = req.body;
+    const { label, startDate, endDate, type, reportingStandard } = req.body;
     const userId = req.user.userId;
 
     // Validate input
     if (!startDate || !endDate) {
       return res.status(400).json({
         error: 'startDate and endDate required',
+      });
+    }
+
+    // Validate reporting standard
+    const validStandards = ['CSRD', 'GHG_PROTOCOL', 'ISO_14064'];
+    const standard = reportingStandard || 'CSRD';
+    if (!validStandards.includes(standard)) {
+      return res.status(400).json({
+        error: `Invalid reporting standard. Must be one of: ${validStandards.join(', ')}`,
       });
     }
 
@@ -40,7 +49,7 @@ export async function createReportingPeriod(req, res, next) {
        (id, company_id, period_label, period_start_date, period_end_date, period_type, reporting_standard, status, created_at, updated_at) 
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
        RETURNING *`,
-      [id, companyId, label || null, start, end, type || null, standard || 'CSRD', 'draft', now, now]
+      [id, companyId, label || null, start, end, type || null, standard, 'draft', now, now]
     );
 
     res.status(201).json({

@@ -8,6 +8,7 @@
 
 import express from 'express';
 import * as reportingController from '../controllers/reportingController.js';
+import * as reportHistoryController from '../controllers/reportHistoryController.js';
 import { authMiddleware, requireRole } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -61,6 +62,24 @@ router.post(
 router.get(
   '/goal-progress',
   reportingController.getGoalProgress
+);
+
+/**
+ * Get report details by ID
+ * GET /api/reports/:reportId
+ */
+router.get(
+  '/:reportId',
+  reportHistoryController.getReportById
+);
+
+/**
+ * Delete a report
+ * DELETE /api/reports/:reportId
+ */
+router.delete(
+  '/:reportId',
+  reportHistoryController.deleteReport
 );
 
 export default router;

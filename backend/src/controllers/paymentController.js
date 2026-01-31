@@ -38,7 +38,7 @@ export async function createCheckoutSession(req, res) {
       });
     }
 
-    const session = await paymentService.createCheckoutSession(
+    const result = await paymentService.createCheckoutSession(
       companyId,
       reportingPeriodId,
       metadata
@@ -46,7 +46,7 @@ export async function createCheckoutSession(req, res) {
 
     res.json({
       success: true,
-      session
+      ...result
     });
 
   } catch (error) {

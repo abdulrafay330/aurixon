@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { hashPassword, verifyPassword } from '../utils/password.js';
 import { generateToken } from '../utils/jwt.js';
 import { query, queryOne, execute } from '../utils/db.js';
+import { sendWelcomeEmail } from '../services/emailService.js';
 
 /**
  * Register a new user
@@ -51,6 +52,15 @@ export async function registerUser(req, res, next) {
     const token = generateToken({
       userId: newUser.id,
       email: newUser.email,
+    });
+
+    // Send welcome email (async, don't await to avoid blocking response)
+    sendWelcomeEmail(
+      newUser.email,
+      `${newUser.first_name || ''} ${newUser.last_name || ''}`.trim() || 'User',
+      'AURIXON Platform'
+    ).catch((err) => {
+      console.error('[AUTH] Failed to send welcome email:', err.message);
     });
 
     res.status(201).json({

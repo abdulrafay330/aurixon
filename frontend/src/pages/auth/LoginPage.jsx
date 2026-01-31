@@ -91,7 +91,7 @@ const LoginPage = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="input"
+                className="input bg-white text-gray-900"
                 placeholder="your.email@company.com"
                 value={formData.email}
                 onChange={handleChange}
@@ -109,7 +109,7 @@ const LoginPage = () => {
                 type="password"
                 autoComplete="current-password"
                 required
-                className="input"
+                className="input bg-white text-gray-900"
                 placeholder="Enter your password"
                 value={formData.password}
                 onChange={handleChange}
@@ -157,6 +157,13 @@ const LoginPage = () => {
                 Create one now
               </Link>
             </p>
+          </div>
+
+          {/* Back to Home */}
+          <div className="mt-4 text-center">
+            <Link to="/" className="text-sm text-compliance-blue hover:text-white transition-colors">
+              ← Back to Home
+            </Link>
           </div>
         </div>
       </div>

@@ -34,24 +34,34 @@ async function getEmissionsTrends(companyId, options = {}) {
     
     if (activityType) {
       params.push(activityType);
-      whereClause += ` AND cr.activity_type = $${params.length}`;
+      whereClause += ` AND ec.activity_type = $${params.length}`;
     }
     
+    // We need to join with a subquery that gets only the latest calculation per activity
     const query = `
+      WITH LatestCalculations AS (
+        SELECT DISTINCT ON (activity_id) *
+        FROM emission_calculations
+        ORDER BY activity_id, created_at DESC
+      )
       SELECT 
         rp.id as period_id,
         rp.period_label,
         rp.period_start_date,
         rp.period_end_date,
-        cr.activity_type,
-        cr.scope,
-        SUM((cr.calculation_result->>'total_co2e_mt')::numeric) as total_co2e_mt,
-        COUNT(DISTINCT cr.activity_id) as activity_count
+        ec.activity_type,
+        CASE 
+          WHEN ec.activity_type::text IN ('stationary_combustion', 'mobile_sources', 'refrigeration_ac', 'fire_suppression', 'purchased_gases') THEN 'scope_1'
+          WHEN ec.activity_type::text IN ('electricity', 'steam') THEN 'scope_2'
+          ELSE 'scope_3'
+        END as scope,
+        SUM(ec.co2e_metric_tons) as total_co2e_mt,
+        COUNT(DISTINCT ec.activity_id) as activity_count
       FROM reporting_periods rp
-      LEFT JOIN calculation_results cr ON cr.reporting_period_id = rp.id AND cr.is_latest = true
+      LEFT JOIN LatestCalculations ec ON ec.reporting_period_id = rp.id
       ${whereClause}
-      GROUP BY rp.id, rp.period_label, rp.period_start_date, rp.period_end_date, cr.activity_type, cr.scope
-      ORDER BY rp.period_start_date, cr.scope
+      GROUP BY rp.id, rp.period_label, rp.period_start_date, rp.period_end_date, ec.activity_type
+      ORDER BY rp.period_start_date
     `;
     
     const result = await pool.query(query, params);
@@ -98,18 +108,27 @@ async function getEmissionsTrends(companyId, options = {}) {
 async function getScopeBreakdown(reportingPeriodId) {
   try {
     const query = `
+      WITH LatestCalculations AS (
+        SELECT DISTINCT ON (activity_id) *
+        FROM emission_calculations
+        WHERE reporting_period_id = $1
+        ORDER BY activity_id, created_at DESC
+      )
       SELECT 
-        scope,
+        CASE 
+          WHEN activity_type::text IN ('stationary_combustion', 'mobile_sources', 'refrigeration_ac', 'fire_suppression', 'purchased_gases') THEN 'scope_1'
+          WHEN activity_type::text IN ('electricity', 'steam') THEN 'scope_2'
+          ELSE 'scope_3'
+        END as scope,
         activity_type,
         COUNT(*) as calculation_count,
-        SUM((calculation_result->>'total_co2e_mt')::numeric) as total_co2e_mt,
-        SUM((calculation_result->>'co2_mt')::numeric) as total_co2_mt,
-        SUM((calculation_result->>'ch4_co2e_mt')::numeric) as total_ch4_co2e_mt,
-        SUM((calculation_result->>'n2o_co2e_mt')::numeric) as total_n2o_co2e_mt,
-        MIN(calculated_at) as first_calculation,
-        MAX(calculated_at) as last_calculation
-      FROM calculation_results
-      WHERE reporting_period_id = $1 AND is_latest = true
+        SUM(co2e_metric_tons) as total_co2e_mt,
+        SUM(co2_kg / 1000.0) as total_co2_mt,
+        SUM((calculation_metadata->>'ch4_co2e_mt')::numeric) as total_ch4_co2e_mt,
+        SUM((calculation_metadata->>'n2o_co2e_mt')::numeric) as total_n2o_co2e_mt,
+        MIN(created_at) as first_calculation,
+        MAX(created_at) as last_calculation
+      FROM LatestCalculations
       GROUP BY scope, activity_type
       ORDER BY scope, total_co2e_mt DESC
     `;
@@ -230,47 +249,43 @@ async function getEmissionIntensity(reportingPeriodId, options = {}) {
  */
 async function getGoalProgress(companyId, goalYear) {
   try {
-    // Get baseline year emissions
-    const baselineQuery = `
-      SELECT 
-        SUM((cr.calculation_result->>'total_co2e_mt')::numeric) as baseline_emissions,
-        rp.period_label as baseline_period
-      FROM calculation_results cr
-      JOIN reporting_periods rp ON rp.id = cr.reporting_period_id
-      WHERE rp.company_id = $1 
-        AND EXTRACT(YEAR FROM rp.period_start_date) = $2
-        AND cr.is_latest = true
-      GROUP BY rp.period_label
-      LIMIT 1
-    `;
+    // Shared CTE for getting latest calculations for a given year
+    const getEmissionsForYear = async (year) => {
+      const query = `
+        WITH LatestCalculations AS (
+          SELECT DISTINCT ON (activity_id) *
+          FROM emission_calculations
+          WHERE company_id = $1
+          ORDER BY activity_id, created_at DESC
+        )
+        SELECT 
+          SUM(lc.co2e_metric_tons) as total_emissions,
+          rp.period_label
+        FROM LatestCalculations lc
+        JOIN reporting_periods rp ON rp.id = lc.reporting_period_id
+        WHERE EXTRACT(YEAR FROM rp.period_start_date) = $2
+        GROUP BY rp.period_label
+        LIMIT 1
+      `;
+      const res = await pool.query(query, [companyId, year]);
+      return res.rows.length > 0 ? {
+        emissions: parseFloat(res.rows[0].total_emissions),
+        period: res.rows[0].period_label
+      } : null;
+    };
+
+    const baselineData = await getEmissionsForYear(goalYear);
     
-    const baselineResult = await pool.query(baselineQuery, [companyId, goalYear]);
-    
-    if (baselineResult.rows.length === 0) {
+    if (!baselineData) {
       throw new Error(`No baseline data found for year ${goalYear}`);
     }
     
-    const baselineEmissions = parseFloat(baselineResult.rows[0].baseline_emissions);
+    const baselineEmissions = baselineData.emissions;
     
     // Get current year emissions
     const currentYear = new Date().getFullYear();
-    const currentQuery = `
-      SELECT 
-        SUM((cr.calculation_result->>'total_co2e_mt')::numeric) as current_emissions,
-        rp.period_label as current_period
-      FROM calculation_results cr
-      JOIN reporting_periods rp ON rp.id = cr.reporting_period_id
-      WHERE rp.company_id = $1 
-        AND EXTRACT(YEAR FROM rp.period_start_date) = $2
-        AND cr.is_latest = true
-      GROUP BY rp.period_label
-      LIMIT 1
-    `;
-    
-    const currentResult = await pool.query(currentQuery, [companyId, currentYear]);
-    const currentEmissions = currentResult.rows.length > 0 
-      ? parseFloat(currentResult.rows[0].current_emissions) 
-      : 0;
+    const currentData = await getEmissionsForYear(currentYear);
+    const currentEmissions = currentData ? currentData.emissions : 0;
     
     const reductionAchieved = baselineEmissions - currentEmissions;
     const reductionPercent = (reductionAchieved / baselineEmissions * 100).toFixed(2);

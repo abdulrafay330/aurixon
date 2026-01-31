@@ -193,8 +193,8 @@ export async function getMyReviews(req, res) {
     const userId = req.user?.userId || req.user?.id;
 
     const result = await pool.query(
-      `SELECT w.*, rp.period_name, c.name as company_name,
-        u.name as submitted_by_name
+      `SELECT w.*, rp.period_label, c.name as company_name,
+        u.first_name || ' ' || u.last_name as submitted_by_name
        FROM approval_workflows w
        JOIN reporting_periods rp ON w.reporting_period_id = rp.id
        JOIN companies c ON w.company_id = c.id

@@ -47,7 +47,7 @@ async function getStationaryFuelFactors(fuelType, standard = 'GHG_PROTOCOL', ver
         effective_date,
         source
       FROM emission_factors_stationary
-      WHERE fuel_type = $1
+      WHERE LOWER(fuel_type) = LOWER($1)
         AND standard = $2
         AND (version = $3 OR $3 = 'latest')
       ORDER BY effective_date DESC
@@ -102,20 +102,104 @@ async function getMobileSourceFactors(vehicleType, vehicleYear, fuelType, standa
         effective_date,
         source
       FROM emission_factors_mobile
-      WHERE vehicle_type = $1
+      WHERE LOWER(vehicle_type) = LOWER($1)
         AND vehicle_year <= $2
-        AND fuel_type = $3
+        AND LOWER(fuel_type) = LOWER($3)
         AND standard = $4
       ORDER BY vehicle_year DESC, effective_date DESC
       LIMIT 1
     `;
     
-    const result = await pool.query(query, [vehicleType, vehicleYear, fuelType, standard]);
+    let result = await pool.query(query, [vehicleType, vehicleYear, fuelType, standard]);
     
+    // FALLBACK: If no factor found for this year or older, try finding ANY factor for this vehicle/fuel
+    // This handles cases where the vehicle is older than our dataset, or if there's a gap.
     if (result.rows.length === 0) {
-      throw new Error(`Emission factors not found for vehicle: ${vehicleType} (${vehicleYear}) - ${fuelType}`);
+      console.log(`[EmissionFactorResolver] No exact factor for ${vehicleType} (${vehicleYear}). Trying fallback...`);
+      const fallbackQuery = `
+        SELECT 
+          vehicle_type,
+          vehicle_year,
+          fuel_type,
+          co2_kg_per_gallon,
+          ch4_g_per_mile,
+          n2o_g_per_mile,
+          standard,
+          version,
+          effective_date,
+          source
+        FROM emission_factors_mobile
+        WHERE LOWER(vehicle_type) = LOWER($1)
+          AND LOWER(fuel_type) = LOWER($2)
+          AND standard = $3
+        ORDER BY vehicle_year DESC 
+        LIMIT 1
+      `;
+      
+      const fallbackResult = await pool.query(
+        fallbackQuery, 
+        [vehicleType, fuelType, standard]
+      );
+      
+      if (fallbackResult.rows.length > 0) {
+        result = fallbackResult;
+        console.log(`[EmissionFactorResolver] Using fallback factor from year ${result.rows[0].vehicle_year}`);
+      }
     }
     
+    // ------------------------------------------------------------------
+    // HARDCODED BACKUP FACTORS
+    // Only use if DB returns no results
+    // ------------------------------------------------------------------
+    if (result.rows.length === 0) {
+      console.log(`[EmissionFactorResolver] DB lookup failed. Checking hardcoded backups for: ${vehicleType} / ${fuelType}`);
+      
+      // Normalize keys for case-insensitive matching
+      const vType = vehicleType.toLowerCase();
+      const fType = fuelType.toLowerCase();
+      
+      // Standard CO2 factors (approximate EPA 2024 values)
+      const GASOLINE_CO2 = 8.78; // kg/gallon
+      const DIESEL_CO2 = 10.21;  // kg/gallon
+      const CNG_CO2 = 0.0544;    // kg/scf
+      const LPG_CO2 = 5.68;      // kg/gallon
+      const ETHANOL_CO2 = 5.75;  // kg/gallon (100%)
+      const BIODIESEL_CO2 = 9.45;// kg/gallon (100%)
+      
+      let backupFactor = null;
+
+      if (fType.includes('gasoline') || fType.includes('petrol')) {
+        backupFactor = { co2_kg_per_gallon: GASOLINE_CO2, ch4_g_per_mile: 0.019, n2o_g_per_mile: 0.013 };
+      } else if (fType.includes('diesel')) {
+        backupFactor = { co2_kg_per_gallon: DIESEL_CO2, ch4_g_per_mile: 0.001, n2o_g_per_mile: 0.001 };
+      } else if (fType.includes('cng') || fType.includes('natural gas')) {
+        backupFactor = { co2_kg_per_gallon: CNG_CO2, ch4_g_per_mile: 0.034, n2o_g_per_mile: 0.002, unit_override: 'scf' };
+      } else if (fType.includes('lpg') || fType.includes('propane')) {
+        backupFactor = { co2_kg_per_gallon: LPG_CO2, ch4_g_per_mile: 0.034, n2o_g_per_mile: 0.002 };
+      } else if (fType.includes('ethanol')) {
+        backupFactor = { co2_kg_per_gallon: ETHANOL_CO2, ch4_g_per_mile: 0.055, n2o_g_per_mile: 0.013 };
+      } else if (fType.includes('biodiesel')) {
+        backupFactor = { co2_kg_per_gallon: BIODIESEL_CO2, ch4_g_per_mile: 0.001, n2o_g_per_mile: 0.001 };
+      }
+
+      if (backupFactor) {
+        console.warn(`[EmissionFactorResolver] Using HARDCODED backup factor for ${vehicleType} (${vehicleYear})`);
+        const factors = {
+          vehicle_type: vehicleType,
+          vehicle_year: vehicleYear,
+          fuel_type: fuelType,
+          co2_kg_per_gallon: backupFactor.co2_kg_per_gallon,
+          ch4_g_per_mile: backupFactor.ch4_g_per_mile,
+          n2o_g_per_mile: backupFactor.n2o_g_per_mile,
+          standard: standard,
+          source: 'HARDCODED_BACKUP'
+        };
+        // Cache it
+        setInCache(cacheKey, factors);
+        return factors;
+      }
+    }
+
     const factors = result.rows[0];
     
     // Cache the result
@@ -152,7 +236,7 @@ async function getRefrigerantGWP(gasType, standard = 'GHG_PROTOCOL') {
         ipcc_assessment_report,
         effective_date
       FROM emission_factors_refrigerants
-      WHERE gas_type = $1
+      WHERE LOWER(gas_type) = LOWER($1)
         AND standard = $2
       ORDER BY effective_date DESC
       LIMIT 1
@@ -296,6 +380,9 @@ async function getElectricityFactors(gridRegion, standard = 'GHG_PROTOCOL', opti
       SELECT 
         grid_region,
         co2e_kg_per_kwh,
+        co2_lb_per_mwh,
+        ch4_lb_per_mwh,
+        n2o_lb_per_mwh,
         standard,
         version,
         effective_date,
@@ -489,7 +576,7 @@ async function getWasteFactors(wasteType, disposalMethod) {
       throw new Error(`No emission factor found for waste type: ${wasteType}, disposal: ${disposalMethod}`);
     }
     
-    setCache(cacheKey, result.rows[0]);
+    setInCache(cacheKey, result.rows[0]);
     return result.rows[0];
   } catch (error) {
     throw new Error(`Error fetching waste emission factors: ${error.message}`);
@@ -517,7 +604,7 @@ async function getPurchasedGasGWP(gasType) {
       throw new Error(`No GWP found for gas type: ${gasType}`);
     }
     
-    setCache(cacheKey, result.rows[0]);
+    setInCache(cacheKey, result.rows[0]);
     return result.rows[0];
   } catch (error) {
     throw new Error(`Error fetching purchased gas GWP: ${error.message}`);
@@ -553,7 +640,7 @@ async function getBusinessTravelFactors(travelMode, options = {}) {
       throw new Error(`No emission factor found for travel mode: ${travelMode}`);
     }
     
-    setCache(cacheKey, result.rows[0]);
+    setInCache(cacheKey, result.rows[0]);
     return result.rows[0];
   } catch (error) {
     throw new Error(`Error fetching business travel factors: ${error.message}`);
@@ -612,7 +699,7 @@ async function getCommutingFactors(commuteMode, vehicleType) {
       throw new Error(`No emission factor found for commute mode: ${commuteMode}`);
     }
     
-    setCache(cacheKey, result.rows[0]);
+    setInCache(cacheKey, result.rows[0]);
     return result.rows[0];
   } catch (error) {
     throw new Error(`Error fetching commuting factors: ${error.message}`);
@@ -643,7 +730,7 @@ async function getTransportationFactors(transportMode, vehicleType) {
       throw new Error(`No emission factor found for transport mode: ${transportMode}`);
     }
     
-    setCache(cacheKey, result.rows[0]);
+    setInCache(cacheKey, result.rows[0]);
     return result.rows[0];
   } catch (error) {
     throw new Error(`Error fetching transportation factors: ${error.message}`);

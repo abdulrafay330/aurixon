@@ -8,16 +8,19 @@ import LanguageSwitcher from '../common/LanguageSwitcher';
  * Sidebar Component
  * Navigation sidebar with role-based menu items
  */
-const Sidebar = () => {
+/**
+ * Sidebar Component
+ * Navigation sidebar with role-based menu items
+ */
+const Sidebar = ({ isOpen, setIsOpen }) => {
   const { user, hasRole, hasAnyRole, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const { t, ready } = useTranslation();
-  const [isOpen, setIsOpen] = useState(true);
 
   const handleLogout = () => {
     logout();
-    navigate('/login');
+    navigate('/');
     setIsOpen(false);
   };
 
@@ -27,40 +30,52 @@ const Sidebar = () => {
 
   const menuItems = useMemo(() => [
     {
-      name: t('nav.dashboard'),
+      name: t('nav.dashboard', 'Dashboard'),
       path: '/dashboard',
       icon: '📊',
       roles: ['company_admin', 'editor', 'viewer', 'internal_admin'],
     },
     {
-      name: t('nav.activities'),
+      name: t('nav.activities', 'Activities'),
       path: '/activities',
       icon: '📝',
       roles: ['company_admin', 'editor'],
     },
     {
-      name: t('nav.calculations'),
-      path: '/calculations',
-      icon: '🧮',
+      name: t('nav.periods', 'Periods'),
+      path: '/reporting-periods',
+      icon: '📅',
       roles: ['company_admin', 'editor', 'viewer'],
     },
     {
-      name: t('nav.reports'),
+      name: t('nav.reports', 'Reports'),
       path: '/reports',
       icon: '📄',
       roles: ['company_admin', 'editor', 'viewer'],
     },
     {
-      name: t('nav.settings'),
-      path: '/settings',
+      name: t('nav.profile', 'Profile'),
+      path: '/settings/profile',
+      icon: '👤',
+      roles: ['company_admin', 'editor', 'viewer', 'internal_admin'],
+    },
+    {
+      name: t('nav.settings', 'Settings'),
+      path: '/settings/company',
       icon: '⚙️',
       roles: ['company_admin'],
     },
     {
-      name: t('nav.admin'),
+      name: t('nav.admin', 'Admin'),
       path: '/admin',
       icon: '👑',
       roles: ['internal_admin'],
+    },
+    {
+      name: t('nav.help', 'Help'),
+      path: '/help',
+      icon: '❓',
+      roles: ['company_admin', 'editor', 'viewer', 'internal_admin'],
     },
   ], [t, ready]);
 
@@ -70,15 +85,6 @@ const Sidebar = () => {
 
   return (
     <>
-      {/* Mobile Toggle Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed top-20 left-4 z-[60] p-3 rounded-lg bg-midnight-navy text-white shadow-lg border border-cyan-mist/30 hover:bg-midnight-navy/90 transition-colors"
-        aria-label="Toggle menu"
-      >
-        <span className="text-xl">{isOpen ? '✕' : '☰'}</span>
-      </button>
-
       {/* Sidebar */}
       <aside
         className={`

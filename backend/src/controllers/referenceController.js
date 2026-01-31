@@ -4,6 +4,24 @@
 // ========================================================================
 
 import { getActivityTypes, getDropdowns } from '../utils/validation.js';
+import { queryAll } from '../utils/db.js';
+
+/**
+ * Get all reference boundary questions
+ * GET /api/reference/boundary-questions
+ */
+export async function getBoundaryQuestionsReference(req, res, next) {
+  try {
+    const questions = await queryAll(
+      `SELECT id, question_text, activity_type_id, scope, is_required, notes
+       FROM reference_boundary_questions
+       ORDER BY scope, id`
+    );
+    res.json(questions);
+  } catch (error) {
+    next(error);
+  }
+}
 
 /**
  * Get all activity types with metadata

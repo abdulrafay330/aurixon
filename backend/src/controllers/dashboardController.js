@@ -7,6 +7,7 @@
  */
 
 import * as dashboardService from '../services/dashboardService.js';
+import pool from '../utils/db.js';
 
 /**
  * Get company KPIs
@@ -16,7 +17,24 @@ import * as dashboardService from '../services/dashboardService.js';
 export async function getKPIs(req, res) {
   try {
     const { companyId } = req.params;
-    const { periodId } = req.query;
+    let { periodId } = req.query;
+
+    // Handle "current" keyword to get the current reporting period
+    if (periodId === 'current') {
+      const currentPeriodQuery = `
+        SELECT id FROM reporting_periods 
+        WHERE company_id = $1 
+        AND status = 'active' 
+        ORDER BY period_start_date DESC 
+        LIMIT 1
+      `;
+      const result = await pool.query(currentPeriodQuery, [companyId]);
+      if (result.rows.length > 0) {
+        periodId = result.rows[0].id;
+      } else {
+        periodId = null; // No active period, show all data
+      }
+    }
 
     const kpis = await dashboardService.getCompanyKPIs(companyId, periodId);
 

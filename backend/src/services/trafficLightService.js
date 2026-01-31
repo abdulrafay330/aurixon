@@ -65,14 +65,15 @@ export async function calculateTrafficLightScore(reportingPeriodId, companyMetri
     const industry = period.industry || 'Default';
 
     // Get total emissions and scope breakdown
+    // Note: 'scope' is stored in calculation_metadata JSONB, not as a direct column
     const emissionsQuery = await pool.query(
       `SELECT 
-         SUM((calculation_result->>'total_co2e_mt')::numeric) as total_emissions,
+         SUM(co2e_metric_tons) as total_emissions,
          activity_type,
-         scope
-       FROM calculation_results
-       WHERE reporting_period_id = $1 AND is_latest = true
-       GROUP BY activity_type, scope`,
+         calculation_metadata->>'scope' as scope
+       FROM emission_calculations
+       WHERE reporting_period_id = $1
+       GROUP BY activity_type, calculation_metadata->>'scope'`,
       [reportingPeriodId]
     );
 
@@ -160,7 +161,7 @@ export async function calculateTrafficLightScore(reportingPeriodId, companyMetri
     // 4. Year-over-year trend (if previous period exists)
     const previousPeriodQuery = await pool.query(
       `SELECT rp.id, 
-         SUM((cr.calculation_result->>'total_co2e_mt')::numeric) as total_emissions
+         SUM((cr.result_data->>'total_co2e_mt')::numeric) as total_emissions
        FROM reporting_periods rp
        LEFT JOIN calculation_results cr ON cr.reporting_period_id = rp.id AND cr.is_latest = true
        WHERE rp.company_id = $1 AND rp.period_end_date < $2

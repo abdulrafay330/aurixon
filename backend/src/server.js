@@ -22,6 +22,11 @@ import dashboardRoutes from './routes/dashboardRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js';
 import translationRoutes from './routes/translationRoutes.js';
 import csrdRoutes from './routes/csrdRoutes.js';
+import reportHistoryRoutes from './routes/reportHistoryRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import settingsRoutes from './routes/settingsRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 
 // Import middleware
 import { errorHandler, notFoundHandler } from './middleware/errors.js';
@@ -33,7 +38,7 @@ import { testConnection } from './utils/db.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5001;
 const NODE_ENV = process.env.NODE_ENV || 'development';
 
 // ========================================================================
@@ -94,9 +99,12 @@ app.get('/health', (req, res) => {
 // ========================================================================
 
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/settings', settingsRoutes);
 app.use('/api/companies', companyRoutes);
 app.use('/api/companies/:companyId/reporting-periods', reportingPeriodRoutes);
 app.use('/api/companies/:companyId/activities', activityRoutes);
+app.use('/api/boundaries', boundaryRoutes);
 app.use('/api/reference', referenceRoutes);
 app.use('/api/calculations', calculationRoutes);
 app.use('/api/reports', reportingRoutes);
@@ -106,6 +114,9 @@ app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/translations', translationRoutes);
 app.use('/api/csrd', csrdRoutes);
+app.use('/api/reports/history', reportHistoryRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // ========================================================================
 // ERROR HANDLING

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import Sidebar from './Sidebar';
@@ -9,14 +10,15 @@ import { useAuth } from '../../contexts/AuthContext';
  */
 const MainLayout = ({ children }) => {
   const { isAuthenticated } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-midnight-navy via-gray-900 to-midnight-navy">
       {/* Header - always at top */}
-      <Header />
+      <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} showMenuButton={isAuthenticated} />
       
       {/* Sidebar for authenticated users */}
-      {isAuthenticated && <Sidebar />}
+      {isAuthenticated && <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />}
       
       {/* Main content area - shifts right when sidebar is present on desktop */}
       <div className={`flex flex-col flex-1 transition-all duration-300 ${

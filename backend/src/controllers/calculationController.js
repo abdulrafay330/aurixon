@@ -76,7 +76,11 @@ async function calculateStationaryCombustion(req, res) {
     res.json({
       success: true,
       calculation: storedResult,
-      result: calculationResult
+      result: {
+        ...calculationResult,
+        // Always provide emissions in MT for frontend/table use
+        co2e_mt: calculationResult.total_co2e_mt
+      }
     });
   } catch (error) {
     console.error('[CalculationController] Error in calculateStationaryCombustion:', error);
@@ -679,13 +683,13 @@ async function calculateWaste(req, res) {
       emissionFactor
     );
     
-    const storedResult = await calculationStorage.storeCalculation({
-      reportingPeriodId,
+    const storedResult = await calculationStorage.storeCalculationResult({
       activityId,
-      activityType: 'waste_disposal',
-      inputData: req.body,
+      reportingPeriodId,
+      activityType: 'waste',
       calculationResult: result,
-      emissionFactorsUsed: emissionFactor,
+      factorVersion: emissionFactor.version || 'EPA_2024_v1',
+      standard: 'GHG_PROTOCOL',
       calculatedBy: userId
     });
     
@@ -724,13 +728,13 @@ async function calculatePurchasedGases(req, res) {
       emissionFactor
     );
     
-    const storedResult = await calculationStorage.storeCalculation({
-      reportingPeriodId,
+    const storedResult = await calculationStorage.storeCalculationResult({
       activityId,
+      reportingPeriodId,
       activityType: 'purchased_gases',
-      inputData: req.body,
       calculationResult: result,
-      emissionFactorsUsed: emissionFactor,
+      factorVersion: emissionFactor.version || 'EPA_2024_v1',
+      standard: 'GHG_PROTOCOL',
       calculatedBy: userId
     });
     
@@ -778,13 +782,13 @@ async function calculateBusinessTravel(req, res) {
       emissionFactor
     );
     
-    const storedResult = await calculationStorage.storeCalculation({
-      reportingPeriodId,
+    const storedResult = await calculationStorage.storeCalculationResult({
       activityId,
-      activityType: 'business_travel',
-      inputData: req.body,
+      reportingPeriodId,
+      activityType: `business_travel_${travelMode.toLowerCase()}`,
       calculationResult: result,
-      emissionFactorsUsed: emissionFactor,
+      factorVersion: emissionFactor.version || 'EPA_2024_v1',
+      standard: 'GHG_PROTOCOL',
       calculatedBy: userId
     });
     
@@ -823,13 +827,13 @@ async function calculateHotel(req, res) {
       emissionFactor
     );
     
-    const storedResult = await calculationStorage.storeCalculation({
-      reportingPeriodId,
+    const storedResult = await calculationStorage.storeCalculationResult({
       activityId,
-      activityType: 'hotel_stay',
-      inputData: req.body,
+      reportingPeriodId,
+      activityType: 'business_travel_hotel',
       calculationResult: result,
-      emissionFactorsUsed: emissionFactor,
+      factorVersion: emissionFactor.version || 'EPA_2024_v1',
+      standard: 'GHG_PROTOCOL',
       calculatedBy: userId
     });
     
@@ -868,13 +872,13 @@ async function calculateCommuting(req, res) {
       emissionFactor
     );
     
-    const storedResult = await calculationStorage.storeCalculation({
-      reportingPeriodId,
+    const storedResult = await calculationStorage.storeCalculationResult({
       activityId,
+      reportingPeriodId,
       activityType: 'commuting',
-      inputData: req.body,
       calculationResult: result,
-      emissionFactorsUsed: emissionFactor,
+      factorVersion: emissionFactor.version || 'EPA_2024_v1',
+      standard: 'GHG_PROTOCOL',
       calculatedBy: userId
     });
     
@@ -913,13 +917,13 @@ async function calculateTransportation(req, res) {
       emissionFactor
     );
     
-    const storedResult = await calculationStorage.storeCalculation({
-      reportingPeriodId,
+    const storedResult = await calculationStorage.storeCalculationResult({
       activityId,
+      reportingPeriodId,
       activityType: 'transportation_distribution',
-      inputData: req.body,
       calculationResult: result,
-      emissionFactorsUsed: emissionFactor,
+      factorVersion: emissionFactor.version || 'EPA_2024_v1',
+      standard: 'GHG_PROTOCOL',
       calculatedBy: userId
     });
     

@@ -7,6 +7,7 @@
  */
 
 import * as reportingService from '../services/reportingService.js';
+import pool from '../utils/db.js';
 
 /**
  * Get emissions trends
@@ -39,7 +40,49 @@ async function getScopeBreakdown(req, res) {
   try {
     const { periodId } = req.params;
     
-    const breakdown = await reportingService.getScopeBreakdown(periodId);
+    // Handle "current" keyword to get the current reporting period
+    let actualPeriodId = periodId;
+    if (periodId === 'current') {
+      // 1. Try to find active period
+      let result = await pool.query(`
+        SELECT id FROM reporting_periods 
+        WHERE company_id = $1 
+        AND status = 'active' 
+        ORDER BY period_start_date DESC 
+        LIMIT 1
+      `, [req.user.company_id]);
+
+      // 2. Fallback to any latest period
+      if (result.rows.length === 0) {
+        result = await pool.query(`
+          SELECT id FROM reporting_periods 
+          WHERE company_id = $1 
+          ORDER BY period_start_date DESC 
+          LIMIT 1
+        `, [req.user.company_id]);
+      }
+
+      if (result.rows.length === 0) {
+        // No periods exist at all - return empty structure
+        return res.json({ 
+          success: true, 
+          breakdown: {
+            scope1: { total: 0, breakdown: {} },
+            scope2: { total: 0, breakdown: {} },
+            scope3: { total: 0, breakdown: {} },
+            total: 0
+          }
+        });
+      }
+      actualPeriodId = result.rows[0].id;
+    }
+    
+    // Check if UUID is valid to prevent PostgreSQL error
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(actualPeriodId)) {
+       return res.status(400).json({ success: false, error: 'Invalid period ID' });
+    }
+    
+    const breakdown = await reportingService.getScopeBreakdown(actualPeriodId);
     
     res.json({ success: true, breakdown });
   } catch (error) {

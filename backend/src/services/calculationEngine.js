@@ -21,8 +21,108 @@ const CONSTANTS = {
   KG_TO_METRIC_TON: 0.001,
   G_TO_KG: 0.001,
   LB_TO_KG: 0.453592,
-  SHORT_TON_TO_METRIC_TON: 0.907185
-};
+  SHORT_TON_TO_METRIC_TON: 0.907185,
+  
+  // Heat Contents (MMBtu per Unit) - Sourced from EPA Excel 2024
+  GALLON_TO_MMBTU: {
+    "Distillate Fuel Oil No. 2": 0.138,
+    "Residual Fuel Oil No. 6": 0.150,
+    "Kerosene": 0.135,
+    "Liquefied Petroleum Gases (LPG)": 0.092,
+    "Propane": 0.092,
+    "Propane Gas": 0.092,
+    "Biodiesel (100%)": 0.128,
+    "Ethanol (100%)": 0.084,
+    "Rendered Animal Fat": 0.125,
+    "Vegetable Oil": 0.120
+  },
+  SCF_TO_MMBTU: {
+    "Natural Gas": 0.001026,
+    "Propane Gas": 0.002516,
+    "Landfill Gas": 0.000485
+  },
+  TON_TO_MMBTU: {
+    "Anthracite Coal": 25.09,
+    "Bituminous Coal": 24.93,
+    "Sub-bituminous Coal": 17.25,
+    "Lignite Coal": 14.21,
+    "Mixed (Commercial Sector)": 21.39,
+    "Mixed (Electric Power Sector)": 19.73,
+    "Mixed (Industrial Coking)": 26.28,
+    "Mixed (Industrial Sector)": 22.35,
+    "Coal Coke": 24.80,
+    "Agricultural Byproducts": 8.25,
+    "Peat": 8.00,
+    "Solid Byproducts": 10.39,
+    "Wood and Wood Residuals": 17.48,
+    "Municipal Solid Waste": 9.95,
+    "Petroleum Coke (Solid)": 30.00,
+    "Plastics": 38.00,
+    "Tires": 28.00
+  },
+  THERM_TO_MMBTU: 0.1
+}
+/**
+ * Convert quantity from user-entered unit to the expected unit for calculation (MMBtu)
+ * @param {string} fuelType
+ * @param {number} quantity
+ * @param {string} fromUnit
+ * @param {string} toUnit
+ * @returns {number}
+ */
+function convertToCalculationUnit(fuelType, quantity, fromUnit, toUnit) {
+  if (fromUnit === toUnit) return quantity;
+
+  // 1. Target is MMBtu (Standardization Step)
+  if (toUnit === "MMBtu") {
+    // Liquid fuels (gallons -> MMBtu)
+    if (fromUnit === "gallons" && CONSTANTS.GALLON_TO_MMBTU[fuelType]) {
+      return quantity * CONSTANTS.GALLON_TO_MMBTU[fuelType];
+    }
+    // Gaseous fuels (scf -> MMBtu)
+    if (fromUnit === "scf" && CONSTANTS.SCF_TO_MMBTU[fuelType]) {
+      return quantity * CONSTANTS.SCF_TO_MMBTU[fuelType];
+    }
+    // Therm -> MMBtu (Universal)
+    if (fromUnit === "Therm" || fromUnit === "therm") {
+      return quantity * CONSTANTS.THERM_TO_MMBTU;
+    }
+    // Solid fuels (short ton -> MMBtu)
+    if ((fromUnit === "short ton" || fromUnit === "tons") && CONSTANTS.TON_TO_MMBTU[fuelType]) {
+      return quantity * CONSTANTS.TON_TO_MMBTU[fuelType];
+    }
+    // Propane specific handle (if not caught by SCF above)
+    if (fuelType === "Propane Gas" && fromUnit === "gallons") {
+         return quantity * 0.091; // Approx MMBtu/gallon for propane
+    }
+  }
+
+  // 2. Cross-Unit Conversion via MMBtu (e.g., Therm -> Gallons)
+  // If target is NOT MMBtu, first convert input to MMBtu, then MMBtu to target
+  try {
+      // Step A: Convert Input -> MMBtu
+      const quantityMMBtu = convertToCalculationUnit(fuelType, quantity, fromUnit, "MMBtu");
+      
+      // Step B: Convert MMBtu -> Target
+      if (toUnit === "gallons" && CONSTANTS.GALLON_TO_MMBTU[fuelType]) {
+          return quantityMMBtu / CONSTANTS.GALLON_TO_MMBTU[fuelType];
+      }
+      if (toUnit === "scf" && CONSTANTS.SCF_TO_MMBTU[fuelType]) {
+          return quantityMMBtu / CONSTANTS.SCF_TO_MMBTU[fuelType];
+      }
+      if (toUnit === "short ton" && CONSTANTS.TON_TO_MMBTU[fuelType]) {
+          return quantityMMBtu / CONSTANTS.TON_TO_MMBTU[fuelType];
+      }
+       if (toUnit === "Therm" || toUnit === "therm") {
+          return quantityMMBtu / CONSTANTS.THERM_TO_MMBTU;
+      }
+  } catch (e) {
+      // Ignore intermediate errors and fall through to main error
+  }
+
+  // If no conversion found, throw error with more context
+  throw new Error(`Unit conversion from '${fromUnit}' to '${toUnit}' for fuel type '${fuelType}' not implemented.`);
+}
 
 /**
  * Calculate CO2 equivalent emissions from Stationary Combustion
@@ -48,38 +148,39 @@ const CONSTANTS = {
  */
 function calculateStationaryCombustion(params) {
   const { fuelType, quantity, unit, emissionFactors, isBiomass = false } = params;
-  
   // Validate inputs
   if (!fuelType || quantity === undefined || !unit || !emissionFactors) {
     throw new Error('Missing required parameters for stationary combustion calculation');
   }
-  
   if (quantity < 0) {
     throw new Error('Quantity cannot be negative');
   }
-  
+  // Convert quantity to expected unit for calculation
+  const expectedUnit = emissionFactors.unit || "MMBtu";
+  let calcQuantity = quantity;
+  if (unit !== expectedUnit) {
+    calcQuantity = convertToCalculationUnit(fuelType, quantity, unit, expectedUnit);
+  }
   // Calculate emissions
-  const co2_kg = quantity * emissionFactors.co2_kg_per_unit;
-  const ch4_g = quantity * emissionFactors.ch4_g_per_unit;
-  const n2o_g = quantity * emissionFactors.n2o_g_per_unit;
-  
+  const co2_kg = calcQuantity * emissionFactors.co2_kg_per_unit;
+  const ch4_g = calcQuantity * emissionFactors.ch4_g_per_unit;
+  const n2o_g = calcQuantity * emissionFactors.n2o_g_per_unit;
   // Convert to metric tons CO2e
   const ch4_co2e_mt = (ch4_g * CONSTANTS.G_TO_KG * CONSTANTS.CH4_GWP) * CONSTANTS.KG_TO_METRIC_TON;
   const n2o_co2e_mt = (n2o_g * CONSTANTS.G_TO_KG * CONSTANTS.N2O_GWP) * CONSTANTS.KG_TO_METRIC_TON;
   const co2_mt = co2_kg * CONSTANTS.KG_TO_METRIC_TON;
-  
   // Biomass CO2 is reported separately (not included in total)
   const total_co2e_mt = isBiomass 
     ? ch4_co2e_mt + n2o_co2e_mt
     : co2_mt + ch4_co2e_mt + n2o_co2e_mt;
-  
   const biomass_co2_mt = isBiomass ? co2_mt : 0;
   const fossil_co2_mt = isBiomass ? 0 : co2_mt;
-  
   return {
     fuelType,
     quantity,
     unit,
+    calcQuantity,
+    expectedUnit,
     co2_kg,
     ch4_g,
     n2o_g,
@@ -185,75 +286,31 @@ function calculateMobileSources(params) {
 }
 
 /**
- * Calculate CO2 equivalent emissions from Refrigeration & AC Equipment
- * 
- * Formula (from Excel row 26-30 - Material Balance Method):
- * CO2e = (Inventory_Change + Transferred_Amount + Capacity_Change) * GWP
- * 
- * Where:
- * - Inventory_Change = difference in stored gas (beginning - end of year)
- * - Transferred_Amount = purchased - sold/disposed
- * - Capacity_Change = capacity of retired units - capacity of new units
- * 
- * Result cannot be negative (minimum 0)
- * 
+/**
+ * Calculate CO2 equivalent emissions from Refrigeration & AC Equipment (Excel parity)
+ * Formula: CO2e (kg) = amount_released_kg * GWP; CO2e (mt) = CO2e_kg / 1000
+ * Only use: refrigerantType, amountReleased_kg, gwp
  * @param {Object} params - Calculation parameters
  * @param {string} params.refrigerantType - e.g., "R-410A", "R-134a", "CO2"
- * @param {number} params.inventoryChange_kg - Change in stored gas inventory
- * @param {number} params.transferredAmount_kg - Net gas transferred (purchased - sold)
- * @param {number} params.capacityChange_kg - Change in equipment capacity
+ * @param {number} params.amountReleased_kg - Amount of refrigerant released (kg)
  * @param {Object} params.emissionFactors - Factors for this refrigerant
  * @param {number} params.emissionFactors.gwp - Global Warming Potential
  * @returns {Object} Calculation results
  */
 function calculateRefrigerationAC(params) {
-  const { 
-    refrigerantType, 
-    inventoryChange_kg, 
-    transferredAmount_kg, 
-    capacityChange_kg, 
-    emissionFactors 
-  } = params;
-  
-  // Validate inputs
-  if (!refrigerantType || inventoryChange_kg === undefined || 
-      transferredAmount_kg === undefined || capacityChange_kg === undefined || 
-      !emissionFactors) {
+  const { refrigerantType, amountReleased_kg, emissionFactors } = params;
+  if (!refrigerantType || amountReleased_kg === undefined || !emissionFactors) {
     throw new Error('Missing required parameters for refrigeration/AC calculation');
   }
-  
-  // Material balance calculation
-  // In EPA method:
-  // - Negative inventoryChange means we LOST refrigerant (emissions)
-  // - Positive transferred means we sent away (emissions)
-  // - Positive capacity change means we retired equipment (emissions)
-  // Formula: Emissions = MAX(0, ABS(inventoryChange) + transferred + capacityChange)
-  
-  const inventory_loss_kg = inventoryChange_kg < 0 ? Math.abs(inventoryChange_kg) : 0;
-  const total_emissions_kg = inventory_loss_kg + transferredAmount_kg + capacityChange_kg;
-  
-  // Cannot have negative emissions (per Excel formula)
-  const emissions_kg = Math.max(0, total_emissions_kg);
-  
-  // Apply GWP to get CO2e
-  const co2e_kg = emissions_kg * emissionFactors.gwp;
-  const co2e_mt = co2e_kg * CONSTANTS.KG_TO_METRIC_TON;
-  
+  const co2e_kg = amountReleased_kg * emissionFactors.gwp;
+  const co2e_mt = co2e_kg / 1000;
   return {
     refrigerantType,
-    inventoryChange_kg,
-    transferredAmount_kg,
-    capacityChange_kg,
-    total_emissions_kg,
-    refrigerant_kg: emissions_kg, // After max(0, total)
+    amountReleased_kg,
     gwp: emissionFactors.gwp,
+    scope: 'scope_1',
     co2e_kg,
-    total_co2e_mt: co2e_mt,
-    breakdown: {
-      inventory_impact: inventory_loss_kg * emissionFactors.gwp * CONSTANTS.KG_TO_METRIC_TON,
-      transfer_impact: transferredAmount_kg * emissionFactors.gwp * CONSTANTS.KG_TO_METRIC_TON,
-      capacity_impact: capacityChange_kg * emissionFactors.gwp * CONSTANTS.KG_TO_METRIC_TON
-    }
+    total_co2e_mt: co2e_mt
   };
 }
 

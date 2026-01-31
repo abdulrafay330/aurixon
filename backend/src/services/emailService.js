@@ -24,7 +24,7 @@ const EMAIL_CONFIG = {
  * Create email transporter
  */
 function createTransporter() {
-  return nodemailer.createTransporter(EMAIL_CONFIG);
+  return nodemailer.createTransport(EMAIL_CONFIG);
 }
 
 /**
@@ -259,7 +259,7 @@ export async function sendAlertNotification(recipientEmail, alertData) {
  * @param {string} companyName - Company name
  * @returns {Promise<object>} Send result
  */
-export async function sendWelcomeEmail(recipientEmail, userName, companyName) {
+export async function sendWelcomeEmail(recipientEmail, userName, companyName, password = null) {
   const subject = 'Welcome to AURIXON GHG Platform';
   
   const html = `
@@ -267,6 +267,16 @@ export async function sendWelcomeEmail(recipientEmail, userName, companyName) {
       <h2 style="color: #2c3e50;">Welcome to AURIXON!</h2>
       <p>Hi ${userName},</p>
       <p>Your account has been created for <strong>${companyName}</strong>.</p>
+      
+      ${password ? `
+      <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <p style="margin: 0;"><strong>Your Login Credentials:</strong></p>
+        <p style="margin: 5px 0 0 0;">Email: ${recipientEmail}</p>
+        <p style="margin: 5px 0 0 0;">Password: ${password}</p>
+      </div>
+      <p>Please change your password after your first login.</p>
+      ` : ''}
+
       <p>You can now start tracking and managing your greenhouse gas emissions.</p>
       <h3>Getting Started:</h3>
       <ol>
@@ -275,14 +285,14 @@ export async function sendWelcomeEmail(recipientEmail, userName, companyName) {
         <li>Calculate emissions</li>
         <li>Generate reports</li>
       </ol>
-      <a href="${process.env.APP_URL}/dashboard" style="display: inline-block; background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">
-        Go to Dashboard
+      <a href="${process.env.APP_URL || 'http://localhost:3000'}/login" style="display: inline-block; background: #3498db; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; margin-top: 10px;">
+        Login to Dashboard
       </a>
       <p style="margin-top: 20px;">If you have any questions, please contact our support team.</p>
     </div>
   `;
 
-  const text = `Welcome to AURIXON, ${userName}! Your account for ${companyName} is ready.`;
+  const text = `Welcome to AURIXON, ${userName}! Your account for ${companyName} is ready.${password ? `\n\nCredentials:\nEmail: ${recipientEmail}\nPassword: ${password}` : ''}`;
 
   return await sendEmail({
     to: recipientEmail,

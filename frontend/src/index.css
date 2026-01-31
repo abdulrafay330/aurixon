@@ -6,12 +6,12 @@
 
 @layer base {
   body {
-    @apply bg-white text-primary font-sans antialiased;
+    @apply bg-midnight-navy text-white font-sans antialiased;
     font-feature-settings: 'rlig' 1, 'calt' 1;
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading text-primary;
+    @apply font-heading text-white;
   }
 
   h1 {
@@ -46,33 +46,33 @@
   }
 
   .btn-primary {
-    @apply btn bg-success text-white hover:bg-success-hover focus:ring-success shadow-md hover:shadow-lg;
+    @apply btn bg-cyan-mist text-midnight-navy hover:bg-growth-green focus:ring-cyan-mist shadow-md hover:shadow-lg;
   }
 
   .btn-secondary {
-    @apply btn bg-secondary text-white hover:bg-secondary-dark focus:ring-secondary shadow-md hover:shadow-lg;
+    @apply btn bg-white/10 text-white border border-cyan-mist/50 hover:bg-white/20 focus:ring-cyan-mist shadow-md hover:shadow-lg;
   }
 
   .btn-outline {
-    @apply btn border-2 border-primary text-primary hover:bg-primary hover:text-white focus:ring-primary;
+    @apply btn border-2 border-cyan-mist text-cyan-mist hover:bg-cyan-mist hover:text-midnight-navy focus:ring-cyan-mist;
   }
 
   .btn-ghost {
-    @apply btn bg-transparent text-primary hover:bg-primary/5 focus:ring-primary;
+    @apply btn bg-transparent text-cyan-mist hover:bg-cyan-mist/10 focus:ring-cyan-mist;
   }
 
   /* Card Styles */
   .card {
-    @apply bg-white rounded-lg shadow-md p-6 transition-shadow hover:shadow-lg;
+    @apply bg-white/10 backdrop-blur-sm border border-cyan-mist/30 rounded-lg shadow-xl p-6 transition-shadow hover:shadow-2xl;
   }
 
   .card-header {
-    @apply mb-4 pb-4 border-b border-gray-200;
+    @apply mb-4 pb-4 border-b border-cyan-mist/20;
   }
 
   /* Input Styles */
   .input {
-    @apply block w-full px-4 py-2.5 border border-gray-300 rounded-lg text-primary placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-success focus:border-transparent transition-colors;
+    @apply block w-full px-4 py-2.5 bg-primary-light border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-mist focus:border-cyan-mist transition-colors;
   }
 
   .input-error {
@@ -81,12 +81,12 @@
 
   /* Select Styles */
   .select {
-    @apply input appearance-none bg-white cursor-pointer;
+    @apply input appearance-none bg-primary-light cursor-pointer;
   }
 
   /* Label Styles */
   .label {
-    @apply block text-sm font-medium text-primary mb-2;
+    @apply block text-sm font-medium text-white mb-2;
   }
 
   /* Link Styles */
@@ -142,19 +142,19 @@
   }
 
   .table thead {
-    @apply bg-primary/5 border-b-2 border-primary/10;
+    @apply bg-primary-light border-b-2 border-cyan-mist/20;
   }
 
   .table th {
-    @apply px-4 py-3 text-left text-sm font-semibold text-primary;
+    @apply px-4 py-3 text-left text-sm font-semibold text-cyan-mist;
   }
 
   .table td {
-    @apply px-4 py-3 text-sm text-gray-700 border-b border-gray-200;
+    @apply px-4 py-3 text-sm text-gray-300 border-b border-gray-700;
   }
 
   .table tbody tr:hover {
-    @apply bg-gray-50;
+    @apply bg-white/5;
   }
 
   /* Container */

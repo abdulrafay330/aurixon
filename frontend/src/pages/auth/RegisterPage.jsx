@@ -70,12 +70,12 @@ const RegisterPage = () => {
         password: formData.password,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        country: 'US', // Default country - can be enhanced later with country selector
+        country_code: 'US', // Default country - can be enhanced later with country selector
         industry: null, // Optional field - can be added to form later
       });
       
       if (result.success) {
-        navigate('/dashboard');
+        navigate('/login');
       } else {
         setError(result.error);
       }
@@ -132,7 +132,7 @@ const RegisterPage = () => {
                 name="companyName"
                 type="text"
                 required
-                className="input"
+                className="input bg-white text-gray-900"
                 placeholder="Your company name"
                 value={formData.companyName}
                 onChange={handleChange}
@@ -150,7 +150,7 @@ const RegisterPage = () => {
                   name="firstName"
                   type="text"
                   required
-                  className="input"
+                  className="input bg-white text-gray-900"
                   placeholder="John"
                   value={formData.firstName}
                   onChange={handleChange}
@@ -165,7 +165,7 @@ const RegisterPage = () => {
                   name="lastName"
                   type="text"
                   required
-                  className="input"
+                  className="input bg-white text-gray-900"
                   placeholder="Doe"
                   value={formData.lastName}
                   onChange={handleChange}
@@ -184,7 +184,7 @@ const RegisterPage = () => {
                 type="email"
                 autoComplete="email"
                 required
-                className="input"
+                className="input bg-white text-gray-900"
                 placeholder="your.email@company.com"
                 value={formData.email}
                 onChange={handleChange}
@@ -202,7 +202,7 @@ const RegisterPage = () => {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="input"
+                className="input bg-white text-gray-900"
                 placeholder="Min. 8 characters"
                 value={formData.password}
                 onChange={handleChange}
@@ -219,7 +219,7 @@ const RegisterPage = () => {
                 type="password"
                 autoComplete="new-password"
                 required
-                className="input"
+                className="input bg-white text-gray-900"
                 placeholder="Re-enter password"
                 value={formData.confirmPassword}
                 onChange={handleChange}
@@ -234,7 +234,7 @@ const RegisterPage = () => {
               <select
                 id="language"
                 name="language"
-                className="input"
+                className="input bg-white text-gray-900"
                 value={formData.language}
                 onChange={handleChange}
               >
@@ -263,6 +263,13 @@ const RegisterPage = () => {
                 Sign in here
               </Link>
             </p>
+          </div>
+
+          {/* Back to Home */}
+          <div className="mt-4 text-center">
+            <Link to="/" className="text-sm text-compliance-blue hover:text-white transition-colors">
+              ← Back to Home
+            </Link>
           </div>
         </div>
       </div>
