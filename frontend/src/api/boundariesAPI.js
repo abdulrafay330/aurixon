@@ -42,5 +42,10 @@ export const boundariesAPI = {
   getBoundaryQuestions: async () => {
     const response = await apiClient.get('/reference/boundary-questions');
     return response.data;
+  },
+
+  getEnabledActivityTypes: async (companyId) => {
+    const response = await apiClient.get(`/boundaries/enabled-activity-types/${companyId}`);
+    return response.data;
   }
 };

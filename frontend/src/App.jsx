@@ -25,6 +25,7 @@ import BoundaryQuestionsWizard from './pages/BoundaryQuestionsWizard';
 import BoundarySettingsPage from './pages/settings/BoundarySettingsPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 import ReportingPeriodsPage from './pages/ReportingPeriodsPage';
+import ActivitiesChecklistPage from './pages/ActivitiesChecklistPage';
 import Loading from './components/common/Loading';
 import RBAC from './components/RBAC';
 import SettingsDashboard from './pages/settings/SettingsDashboard.jsx';
@@ -137,7 +138,21 @@ function AnimatedRoutes() {
 
             {/* Activities Routes */}
             <Route
+              path="/reports/:periodId/activities"
+              element={
+                <ProtectedRoute>
+                  <MainLayout>
+                    <ActivitiesChecklistPage />
+                  </MainLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/activities"
+              element={<Navigate to="/reporting-periods" replace />}
+            />
+            <Route
+              path="/reports/:periodId/activities/:activityType"
               element={
                 <ProtectedRoute>
                   <MainLayout>

@@ -74,8 +74,9 @@ export async function exportPDF(req, res) {
       [periodId]
     );
 
+    let reportId = null;
     if (periodInfo && periodInfo.calculation_id) {
-       await queryOne(
+       const reportResult = await queryOne(
         `INSERT INTO reports (company_id, reporting_period_id, calculation_id, generated_by, report_type, pdf_file_path, pdf_file_size_bytes, generated_at, status)
          VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), 'generated')
          ON CONFLICT (company_id, reporting_period_id) 
@@ -88,6 +89,7 @@ export async function exportPDF(req, res) {
          RETURNING id`,
         [periodInfo.company_id, periodId, periodInfo.calculation_id, req.user.userId, 'PDF', filePath, pdfBuffer.length]
       );
+      reportId = reportResult?.id;
     } else {
       console.warn('[ExportController] Could not save report record: Missing calculation_id for period', periodId);
     }

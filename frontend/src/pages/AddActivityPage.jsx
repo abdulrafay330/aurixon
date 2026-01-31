@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeftIcon, SparklesIcon, CheckCircleIcon } from '@heroicons/react/24/outline';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/common/Toast';
 import { activitiesAPI } from '../api/activitiesAPI';
@@ -510,14 +511,15 @@ const AddActivityPage = () => {
     const isEdit = !!activityId;
     setIsEditMode(isEdit);
 
-    // Check for periodId in URL
     const urlPeriodId = new URLSearchParams(window.location.search).get('periodId');
-    if (urlPeriodId) {
-      setActivePeriodId(urlPeriodId);
-    } else if (user?.companyId) {
-      // Fetch latest period if not in URL
-      fetchLatestPeriod();
-    }
+    
+    const initializeData = async () => {
+      if (user?.companyId) {
+        await fetchReportingPeriods(urlPeriodId);
+      }
+    };
+
+    initializeData();
     
     if (isEdit) {
       // Load existing activity data
@@ -536,7 +538,7 @@ const AddActivityPage = () => {
     }
   }, [activityType, activityId, user?.companyId]);
 
-  const fetchLatestPeriod = async () => {
+  const fetchReportingPeriods = async (urlPeriodId) => {
     setLoadingPeriods(true);
     try {
       const response = await apiClient.get(`/companies/${user.companyId}/reporting-periods`);
@@ -546,7 +548,13 @@ const AddActivityPage = () => {
       if (periods.length > 0) {
         // Sort by start date desc
         periods.sort((a, b) => new Date(b.period_start_date) - new Date(a.period_start_date));
-        setActivePeriodId(periods[0].id);
+        
+        // Priority: 1. URL parameter | 2. First period (latest)
+        if (urlPeriodId) {
+          setActivePeriodId(urlPeriodId);
+        } else {
+          setActivePeriodId(periods[0].id);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch reporting periods', err);
@@ -563,7 +571,7 @@ const AddActivityPage = () => {
       setFormData(data.activity || data);
     } catch (err) {
       error(err.response?.data?.message || 'Failed to load activity');
-      navigate('/activities');
+      navigate('/reporting-periods');
     } finally {
       setLoading(false);
     }
@@ -723,7 +731,11 @@ const AddActivityPage = () => {
         await activitiesAPI.createActivity(user.companyId, activityType, payload);
         success(t('activities.createSuccess'));
       }
-      navigate(`/activities`);
+      if (activePeriodId) {
+        navigate(`/reports/${activePeriodId}/activities`);
+      } else {
+        navigate(`/activities`);
+      }
     } catch (err) {
       error(err.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'create'} activity`);
     } finally {
@@ -881,86 +893,136 @@ const AddActivityPage = () => {
     }
   };
 
+  const [searchParams] = useSearchParams();
+
+  const handleReturn = () => {
+    if (activePeriodId) {
+      navigate(`/reports/${activePeriodId}/activities?type=${activityType}`);
+    } else {
+      navigate('/reporting-periods');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-midnight-navy p-6">
+    <div className="min-h-screen bg-midnight-navy text-white p-6 sm:p-10">
       <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <button
-            onClick={() => navigate('/activities')}
-            className="text-cyan-mist hover:text-growth-green mb-4 flex items-center gap-2"
-          >
-            ← {t('common.back')}
-          </button>
-          <h1 className="text-3xl font-bold text-off-white mb-2">
-            {isEditMode ? t('activities.editActivity') : t('activities.addActivity')}
-          </h1>
-          <p className="text-stone-gray">
-            {t(`activityTypes.${normalizedActivityType}`, activityType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()))}
-          </p>
+        {/* Modern Header */}
+        <div className="flex items-center gap-6 mb-10">
+           <button
+              onClick={handleReturn}
+              className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-cyan-mist transition-all group"
+              title="Back"
+           >
+              <ArrowLeftIcon className="h-6 w-6 text-cyan-mist group-hover:scale-110 transition-transform" />
+           </button>
+           <div>
+             <div className="flex items-center gap-2 mb-1">
+                <SparklesIcon className="h-4 w-4 text-cyan-mist opacity-60" />
+                <span className="text-[10px] uppercase font-black tracking-[0.2em] text-cyan-mist opacity-80">
+                  {isEditMode ? 'Record Amendment' : 'New Environmental Entry'}
+                </span>
+             </div>
+             <h1 className="text-4xl font-bold tracking-tight">
+               {normalizedActivityType.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}
+             </h1>
+           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="bg-midnight-navy-lighter border border-carbon-gray rounded-lg p-6 space-y-6">
-          {/* Reporting Period Selector */}
+        {/* Enhanced Form Container */}
+        <form onSubmit={handleSubmit} className="space-y-8 animate-fade-in">
+          {/* Section: Period & Context - Read Only */}
           {!isEditMode && (
-            <div>
-              <label className="block text-sm font-medium text-off-white mb-2">
-                {t('activities.reportingPeriod', 'Reporting Period')} <span className="text-red-500">*</span>
-              </label>
-              {loadingPeriods ? (
-                <p className="text-stone-gray">Loading periods...</p>
-              ) : reportingPeriods.length === 0 ? (
-                <div className="p-4 bg-red-900/20 border border-red-500 rounded-lg">
-                  <p className="text-red-300 text-sm">
-                    No reporting periods found. Please create a reporting period first.
-                  </p>
+             <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 shadow-xl">
+                <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
+                   <div className="w-6 h-px bg-gray-600"></div>
+                   Reporting Context
+                </h3>
+                <div className="grid grid-cols-1 gap-6">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-300 mb-3 ml-1">
+                      Target Audit Period
+                    </label>
+                    {loadingPeriods ? (
+                      <div className="h-14 w-full bg-white/5 animate-pulse rounded-2xl"></div>
+                    ) : activePeriodId ? (
+                      // Show selected period as a read-only styled card
+                      <div className="w-full px-5 py-4 bg-midnight-navy border border-cyan-mist/30 rounded-2xl flex items-center gap-3">
+                        <div className="w-8 h-8 bg-cyan-mist/20 rounded-lg flex items-center justify-center">
+                          <span className="text-cyan-mist text-sm font-bold">R</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-white font-medium">
+                            {reportingPeriods.find(p => p.id === activePeriodId)?.period_label || 'Selected Period'}
+                          </p>
+                          <p className="text-xs text-stone-gray">
+                            {(() => {
+                              const period = reportingPeriods.find(p => p.id === activePeriodId);
+                              if (period) {
+                                return `${new Date(period.period_start_date).toLocaleDateString()} - ${new Date(period.period_end_date).toLocaleDateString()}`;
+                              }
+                              return '';
+                            })()}
+                          </p>
+                        </div>
+                        <span className="text-[10px] text-stone-gray uppercase tracking-wider">Auto-assigned</span>
+                      </div>
+                    ) : (
+                      // Error state - no period context
+                      <div className="w-full px-5 py-4 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-sm">
+                        ⚠️ No reporting period specified. Please navigate from Active Reports to add activities.
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <select
-                  value={activePeriodId || ''}
-                  onChange={(e) => setActivePeriodId(e.target.value)}
-                  className="w-full px-4 py-2 bg-midnight-navy border border-carbon-gray rounded-lg text-off-white focus:outline-none focus:border-cyan-mist"
-                  required
-                >
-                  <option value="">Select a reporting period</option>
-                  {reportingPeriods.map((period) => (
-                    <option key={period.id} value={period.id}>
-                      {period.period_label} ({new Date(period.period_start_date).toLocaleDateString()} - {new Date(period.period_end_date).toLocaleDateString()})
-                    </option>
-                  ))}
-                </select>
-              )}
-            </div>
+             </div>
           )}
 
+          {/* Section: Activity Data */}
+          <div className="bg-white/5 border border-white/10 rounded-[2rem] p-10 shadow-2xl relative overflow-hidden">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-mist/5 rounded-full -translate-y-16 translate-x-16 blur-3xl"></div>
+             
+             <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-10 flex items-center gap-3">
+                <div className="w-6 h-px bg-gray-600"></div>
+                Primary Metric Data
+             </h3>
 
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
+               {formFields.map(field => (
+                 <div key={field.name} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
+                   <label className="block text-sm font-bold text-gray-300 mb-3 ml-1">
+                     {field.label} {field.required && <span className="text-cyan-mist">*</span>}
+                   </label>
+                   <div className="relative group">
+                     {renderField({
+                       ...field,
+                       className: `w-full px-5 py-4 bg-midnight-navy border border-white/5 rounded-2xl text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-cyan-mist focus:border-transparent transition-all hover:border-white/20 ${field.className || ''}`
+                     })}
+                   </div>
+                 </div>
+               ))}
+             </div>
+          </div>
 
-          {formFields.map(field => (
-            <div key={field.name}>
-              <label className="block text-sm font-medium text-off-white mb-2">
-                {field.label} {field.required && <span className="text-red-500">*</span>}
-              </label>
-              {renderField(field)}
-            </div>
-          ))}
-
-
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-4 pt-4 border-t border-carbon-gray">
+          {/* Form Actions */}
+          <div className="flex items-center justify-end gap-6 pt-6">
             <button
               type="button"
-              onClick={() => navigate('/activities')}
-              className="px-6 py-2 border border-carbon-gray text-off-white rounded-lg hover:bg-midnight-navy transition-colors"
+              onClick={handleReturn}
+              className="px-8 py-4 text-stone-gray font-bold hover:text-white transition-colors"
             >
               {t('common.cancel')}
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2 bg-cyan-mist text-midnight-navy rounded-lg hover:bg-growth-green transition-colors font-medium disabled:opacity-50"
+              className="px-10 py-4 bg-cyan-mist text-midnight-navy font-black rounded-2xl hover:bg-growth-green transition-all shadow-xl hover:shadow-cyan-mist/20 active:scale-95 disabled:opacity-50 flex items-center gap-3"
             >
-              {loading ? t('common.saving') : t('common.save')}
+              {loading ? (
+                 <div className="w-5 h-5 border-2 border-midnight-navy border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                 <CheckCircleIcon className="h-5 w-5" />
+              )}
+              {loading ? t('common.saving') : isEditMode ? 'Commit Changes' : 'Persist Record'}
             </button>
           </div>
         </form>

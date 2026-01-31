@@ -36,15 +36,9 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       roles: ['company_admin', 'editor', 'viewer', 'internal_admin'],
     },
     {
-      name: t('nav.activities', 'Activities'),
-      path: '/activities',
-      icon: '📝',
-      roles: ['company_admin', 'editor'],
-    },
-    {
-      name: t('nav.periods', 'Periods'),
+      name: t('nav.activeReports', 'Active Reports'),
       path: '/reporting-periods',
-      icon: '📅',
+      icon: '📋',
       roles: ['company_admin', 'editor', 'viewer'],
     },
     {
@@ -140,18 +134,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
           {/* Bottom Section */}
           <div className="mt-8 pt-6 border-t border-cyan-mist/20 space-y-3">
-            {/* Language Switcher */}
-            <div className="px-4 py-2">
+            {/* Language Switcher - Mobile Only (Desktop has it in Header) */}
+            <div className="px-4 py-2 lg:hidden">
               <LanguageSwitcher />
-            </div>
-            
-            <Link
-              to="/help"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 transition-colors"
-            >
-              <span className="text-xl">❓</span>
-              <span className="font-medium">{t('nav.help')}</span>
-            </Link>            
+            </div>            
             {/* Logout Button - Mobile Only */}
             <button
               onClick={handleLogout}

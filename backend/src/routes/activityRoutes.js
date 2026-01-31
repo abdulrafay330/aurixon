@@ -13,6 +13,7 @@ import {
   updateActivity,
   deleteActivity,
   listAllActivitiesByPeriod,
+  getActivityCountsByPeriod,
 } from '../controllers/activityController.js';
 
 const router = Router({ mergeParams: true });
@@ -58,5 +59,17 @@ router.delete(
   requireRole(['editor', 'company_admin', 'internal_admin']),
   deleteActivity
 );
+
+/**
+ * GET /api/companies/:companyId/reporting-periods/:periodId/activities/counts
+ * Get count of activities per type
+ */
+router.get('/counts', getActivityCountsByPeriod);
+
+/**
+ * GET /api/companies/:companyId/reporting-periods/:periodId/activities/all
+ * List all activities across all types
+ */
+router.get('/all', listAllActivitiesByPeriod);
 
 export default router;

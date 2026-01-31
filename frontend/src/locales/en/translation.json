@@ -251,6 +251,33 @@
     "number": "Must be a number",
     "positive": "Must be positive"
   },
+  "reportingPeriods": {
+    "title": "Reports",
+    "subtitle": "Manage your reporting periods",
+    "createNew": "Create New Report",
+    "emptyStateTitle": "Start Your Carbon Footprint Journey",
+    "emptyStateText": "To begin, you first need to create a <b>Report</b> for a specific timeframe (e.g., Year 2024). This will be the home for all your emission data.",
+    "createButton": "Create a Report",
+    "label": "Report Label",
+    "type": "Report Type",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "status": "Status"
+  },
+  "reportingPeriod": {
+    "createNew": "Create New Report",
+    "label": "Report Label",
+    "type": "Report Type",
+    "create": "Create Report",
+    "createSuccess": "Report created successfully"
+  },
+  "boundary": {
+    "setupTitle": "Company Setup",
+    "loadError": "Failed to load questions",
+    "submitSuccess": "Boundary questions saved successfully!",
+    "submitError": "Failed to save boundary questions",
+    "editQuestions": "Edit Questions"
+  },
   "errors": {
     "generic": "An error occurred",
     "network": "Network error",

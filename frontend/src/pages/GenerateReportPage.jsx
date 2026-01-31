@@ -4,6 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '../components/common/Toast';
 import { useAuth } from '../contexts/AuthContext';
 import { reportingPeriodsAPI } from '../api/reportingPeriodsAPI';
+import { dashboardAPI } from '../api/dashboardAPI';
+import { 
+  ArrowRightIcon, 
+  ArrowDownTrayIcon, 
+  TableCellsIcon,
+  ExclamationTriangleIcon 
+} from '@heroicons/react/24/solid';
 
 const GenerateReportPage = () => {
   const { t } = useTranslation();
@@ -28,35 +35,43 @@ const GenerateReportPage = () => {
   // New state for period selection
   const [periods, setPeriods] = useState([]);
   const [loadingPeriods, setLoadingPeriods] = useState(false);
+  const [summaryData, setSummaryData] = useState(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  const [selectedPeriod, setSelectedPeriod] = useState(null);
 
-  // Check payment status or load periods on load
+  // Always fetch periods to have timeline info available
   useEffect(() => {
-    if (!periodId) {
-      // If no period selected, fetch available periods
-      const fetchPeriods = async () => {
-        setLoadingPeriods(true);
-        try {
-          const data = await reportingPeriodsAPI.listPeriods(user.companyId);
-          const periodsArray = data.periods || data.reportingPeriods || [];
-          setPeriods(Array.isArray(periodsArray) ? periodsArray : []);
-          
-          // Auto-select if only one period exists
-          if (periodsArray.length === 1) {
-             setSearchParams({ periodId: periodsArray[0].id });
-          }
-        } catch (err) {
-            console.error('Failed to load periods', err);
-            error('Failed to load reporting periods');
-        } finally {
-            setLoadingPeriods(false);
-        }
-      };
+    const fetchPeriods = async () => {
+      if (!user?.companyId) return;
       
-      if (user?.companyId) {
-        fetchPeriods();
+      setLoadingPeriods(true);
+      try {
+        const data = await reportingPeriodsAPI.listPeriods(user.companyId);
+        const periodsArray = data.periods || data.reportingPeriods || [];
+        setPeriods(Array.isArray(periodsArray) ? periodsArray : []);
+        
+        // If periodId is provided, find and set the selected period
+        if (periodId && periodsArray.length > 0) {
+          const found = periodsArray.find(p => p.id === periodId);
+          setSelectedPeriod(found || null);
+        } else if (periodsArray.length === 1 && !periodId) {
+          // Auto-select if only one period exists
+          setSearchParams({ periodId: periodsArray[0].id });
+        }
+      } catch (err) {
+        console.error('Failed to load periods', err);
+        error('Failed to load reporting periods');
+      } finally {
+        setLoadingPeriods(false);
       }
-      return;
-    }
+    };
+    
+    fetchPeriods();
+  }, [user?.companyId, periodId]);
+
+  // Handle payment and summary when periodId is set
+  useEffect(() => {
+    if (!periodId) return;
 
     // Handle payment redirect parameters
     if (searchParams.get('payment_success') === 'true') {
@@ -87,8 +102,6 @@ const GenerateReportPage = () => {
           const data = await response.json();
           if (data.paid) {
             setIsPaid(true);
-            // If they just arrived here without the success param but it's paid, 
-            // maybe they previously paid. We only auto-set generated if they came from Stripe.
           }
         }
       } catch (err) {
@@ -96,7 +109,20 @@ const GenerateReportPage = () => {
       }
     };
 
+    const fetchSummary = async () => {
+      setLoadingSummary(true);
+      try {
+        const data = await dashboardAPI.getKPIs(user.companyId, periodId);
+        setSummaryData(data);
+      } catch (err) {
+        console.error('Failed to fetch summary data', err);
+      } finally {
+        setLoadingSummary(false);
+      }
+    };
+
     checkPaymentStatus();
+    fetchSummary();
   }, [periodId, navigate, user?.companyId, setSearchParams, searchParams, success, error]);
 
   const handleChange = (e) => {
@@ -267,10 +293,13 @@ const GenerateReportPage = () => {
 
 
         {!periodId ? (
-          <div className="bg-midnight-navy-lighter border border-carbon-gray rounded-lg p-6 max-w-2xl mx-auto">
+          <div className="bg-midnight-navy-lighter border border-carbon-gray rounded-lg p-6 max-w-2xl mx-auto shadow-2xl">
             <h2 className="text-xl font-semibold text-white mb-4">Select Reporting Period</h2>
             {loadingPeriods ? (
-              <div className="text-cyan-mist">Loading periods...</div>
+              <div className="text-cyan-mist flex items-center gap-2">
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-cyan-mist border-t-transparent"></div>
+                Loading periods...
+              </div>
             ) : periods.length > 0 ? (
               <div className="space-y-4">
                 <p className="text-stone-gray mb-4">Please select a reporting period to generate a report for.</p>
@@ -283,9 +312,12 @@ const GenerateReportPage = () => {
                     >
                       <div className="flex justify-between items-center">
                         <span className="font-medium text-white group-hover:text-cyan-mist">{period.period_label}</span>
-                        <span className="text-sm text-stone-gray">
-                           {new Date(period.period_start_date).toLocaleDateString()} - {new Date(period.period_end_date).toLocaleDateString()}
-                        </span>
+                        <div className="flex items-center gap-4">
+                           <span className="text-sm text-stone-gray">
+                              {new Date(period.period_start_date).toLocaleDateString()} - {new Date(period.period_end_date).toLocaleDateString()}
+                           </span>
+                           <ArrowRightIcon className="h-4 w-4 text-stone-gray group-hover:text-cyan-mist" />
+                        </div>
                       </div>
                     </button>
                   ))}
@@ -296,196 +328,266 @@ const GenerateReportPage = () => {
                 <p className="text-stone-gray mb-4">No reporting periods found.</p>
                 <button
                    onClick={() => navigate('/settings/reporting-periods')}
-                   className="px-4 py-2 bg-cyan-mist text-midnight-navy rounded-lg hover:bg-growth-green transition-colors"
+                   className="px-4 py-2 bg-cyan-mist text-midnight-navy rounded-lg hover:bg-growth-green transition-colors font-bold"
                 >
                   Manage Reporting Periods
                 </button>
               </div>
             )}
           </div>
-        ) : !reportGenerated ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Report Configuration Form */}
-            <form onSubmit={handleGenerateReport} className="space-y-6">
-              <div className="bg-midnight-navy-lighter border border-carbon-gray rounded-lg p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Report Configuration</h2>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Left Column: Configuration & Status */}
+            <div className="md:col-span-1 space-y-6">
+              {/* Status Card */}
+              <div className="bg-midnight-navy-lighter border border-carbon-gray rounded-2xl p-6 shadow-xl overflow-hidden relative">
+                <div className="absolute top-0 right-0 p-3">
+                  {isPaid ? (
+                    <span className="px-3 py-1 bg-growth-green text-midnight-navy text-xs font-black rounded-full uppercase tracking-tighter shadow-lg">
+                      Paid
+                    </span>
+                  ) : (
+                    <span className="px-3 py-1 bg-yellow-500 text-midnight-navy text-xs font-black rounded-full uppercase tracking-tighter shadow-lg">
+                      Generated
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                   <div className={`w-2 h-2 rounded-full ${isPaid ? 'bg-growth-green animate-pulse' : 'bg-yellow-500'}`}></div>
+                   Report Status
+                </h2>
+                
                 <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Reporting Standard
-                    </label>
-                    <select
-                      name="reportType"
-                      value={formData.reportType}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 bg-midnight-navy border border-carbon-gray text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-growth-green"
-                    >
-                      <option value="csrd">CSRD (Corporate Sustainability Reporting Directive)</option>
-                      <option value="ghg">GHG Protocol</option>
-                      <option value="iso">ISO 14064</option>
-                    </select>
+                  <div className="p-3 bg-midnight-navy/50 rounded-xl border border-carbon-gray/50">
+                    <p className="text-xs text-stone-gray uppercase font-bold tracking-widest mb-1">Company</p>
+                    <p className="text-white font-medium">{user?.companyName || 'Your Company'}</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-white mb-2">
-                      Report Language
-                    </label>
-                    <select
-                      name="language"
-                      value={formData.language || 'en'}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 bg-midnight-navy border border-carbon-gray text-white rounded-lg focus:outline-none focus:ring-2 focus:ring-growth-green"
-                    >
-                      <option value="en">English</option>
-                      <option value="de">German (Deutsch)</option>
-                    </select>
+                  <div className="p-3 bg-midnight-navy/50 rounded-xl border border-carbon-gray/50">
+                    <p className="text-xs text-stone-gray uppercase font-bold tracking-widest mb-1">Report Period</p>
+                    {loadingPeriods ? (
+                      <div className="h-5 w-32 bg-white/10 animate-pulse rounded"></div>
+                    ) : selectedPeriod ? (
+                      <p className="text-white font-medium">{selectedPeriod.period_label}</p>
+                    ) : (
+                      <p className="text-stone-gray text-sm">Loading...</p>
+                    )}
                   </div>
-                  <div>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="includeCharts"
-                        checked={formData.includeCharts}
-                        onChange={handleChange}
-                        className="w-4 h-4 rounded border-carbon-gray"
-                      />
-                      <span className="text-white text-sm">Include charts and visualizations</span>
-                    </label>
-                  </div>
-                  <div>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="includeDetails"
-                        checked={formData.includeDetails}
-                        onChange={handleChange}
-                        className="w-4 h-4 rounded border-carbon-gray"
-                      />
-                      <span className="text-white text-sm">Include detailed breakdown</span>
-                    </label>
-                  </div>
-                  <div>
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="includeBreakdown"
-                        checked={formData.includeBreakdown}
-                        onChange={handleChange}
-                        className="w-4 h-4 rounded border-carbon-gray"
-                      />
-                      <span className="text-white text-sm">Include scope breakdown</span>
-                    </label>
+                  <div className="p-3 bg-midnight-navy/50 rounded-xl border border-carbon-gray/50">
+                    <p className="text-xs text-stone-gray uppercase font-bold tracking-widest mb-1">Timeline</p>
+                    {loadingPeriods ? (
+                      <div className="h-5 w-40 bg-white/10 animate-pulse rounded"></div>
+                    ) : selectedPeriod ? (
+                      <p className="text-white font-medium">
+                        {new Date(selectedPeriod.period_start_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })} — {new Date(selectedPeriod.period_end_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                      </p>
+                    ) : (
+                      <p className="text-stone-gray text-sm">Loading...</p>
+                    )}
                   </div>
                 </div>
+
+                {!isPaid && (
+                  <div className="mt-8 space-y-4">
+                    <div className="p-4 bg-growth-green/5 border border-growth-green/20 rounded-xl">
+                      <div className="flex justify-between items-center mb-1">
+                        <span className="text-stone-gray text-sm">Full PDF Export</span>
+                        <span className="text-white font-bold">€49.00</span>
+                      </div>
+                      <p className="text-xs text-stone-gray">Includes CSRD compliance, audit trails, and multi-format exports.</p>
+                    </div>
+                    <button
+                      onClick={handleProceedToPayment}
+                      className="w-full py-4 bg-cyan-mist text-midnight-navy font-black rounded-xl hover:bg-growth-green transition-all shadow-[0_0_20px_rgba(34,211,238,0.2)]"
+                    >
+                      Unlock Full Access →
+                    </button>
+                    <p className="text-[10px] text-center text-stone-gray">One-time payment. Multi-user access included.</p>
+                  </div>
+                )}
+
+                {isPaid && (
+                  <div className="mt-8 space-y-3">
+                    <button
+                      onClick={() => handleDownload('pdf')}
+                      className="w-full py-3 bg-midnight-navy border border-cyan-mist/30 text-cyan-mist font-bold rounded-xl hover:bg-cyan-mist hover:text-midnight-navy transition-all flex items-center justify-center gap-2"
+                    >
+                      <ArrowDownTrayIcon className="h-5 w-5" /> Download PDF
+                    </button>
+                    <button
+                      onClick={() => handleDownload('csv')}
+                      className="w-full py-3 bg-midnight-navy border border-carbon-gray text-off-white font-bold rounded-xl hover:bg-midnight-navy-lighter transition-all flex items-center justify-center gap-2"
+                    >
+                      <TableCellsIcon className="h-5 w-5" /> Download CSV
+                    </button>
+                  </div>
+                )}
               </div>
-              <div className="bg-midnight-navy-lighter border border-carbon-gray rounded-lg p-4 sm:p-6">
-                <h3 className="text-sm font-medium text-stone-gray mb-2">Pricing</h3>
-                <div className="flex items-center justify-between">
-                  <span className="text-white">Report Generation & Download</span>
-                  <span className="text-2xl font-bold text-growth-green">€49.00</span>
+
+              {/* Configuration Card */}
+              {!isPaid && (
+                <div className="bg-midnight-navy-lighter border border-carbon-gray rounded-2xl p-6 shadow-xl">
+                  <h2 className="text-lg font-bold text-white mb-4">Report Details</h2>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-stone-gray uppercase tracking-widest mb-2">Standard</label>
+                      <select
+                        name="reportType"
+                        value={formData.reportType}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 bg-midnight-navy border border-carbon-gray text-white rounded-lg focus:outline-none focus:ring-1 focus:ring-cyan-mist"
+                      >
+                        <option value="csrd">CSRD (Compliance)</option>
+                        <option value="ghg">GHG Protocol</option>
+                        <option value="iso">ISO 14064</option>
+                      </select>
+                    </div>
+                    <div className="space-y-3 pt-2">
+                       <label className="flex items-center gap-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          name="includeCharts"
+                          checked={formData.includeCharts}
+                          onChange={handleChange}
+                          className="w-4 h-4 rounded border-carbon-gray bg-midnight-navy text-cyan-mist focus:ring-cyan-mist"
+                        />
+                        <span className="text-sm text-off-white group-hover:text-cyan-mist transition-colors">Include Charts</span>
+                      </label>
+                      <label className="flex items-center gap-3 cursor-pointer group">
+                        <input
+                          type="checkbox"
+                          name="includeDetails"
+                          checked={formData.includeDetails}
+                          onChange={handleChange}
+                          className="w-4 h-4 rounded border-carbon-gray bg-midnight-navy text-cyan-mist focus:ring-cyan-mist"
+                        />
+                        <span className="text-sm text-off-white group-hover:text-cyan-mist transition-colors">Detailed Breakdown</span>
+                      </label>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-stone-gray mt-2">
-                  Pay per report. Access reports for one year.
-                </p>
-              </div>
-              <button
-                type="submit"
-                disabled={generating}
-                className="w-full py-3 bg-growth-green text-midnight-navy font-bold rounded-lg hover:bg-opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {generating ? 'Generating...' : 'Generate Report'}
-              </button>
-            </form>
-            {/* Live Report Preview */}
-            <div className="bg-midnight-navy-lighter border border-carbon-gray rounded-lg p-4 sm:p-6">
-              <h2 className="text-lg font-semibold text-white mb-4">Live Report Preview</h2>
-              <ul className="list-disc pl-6 text-white text-sm mb-4">
-                <li>Summary & KPIs</li>
-                {formData.includeBreakdown && <li>Scope Breakdown</li>}
-                {formData.includeDetails && <li>Detailed Activity Breakdown</li>}
-                {formData.includeCharts && <li>Charts & Visualizations</li>}
-                <li>Recommendations</li>
-                <li>Audit Trail</li>
-                <li>Certification & Signature</li>
-              </ul>
-              <div className="text-stone-gray text-xs">
-                <p>All numbers, units, and calculations will match the Excel calculator exactly.</p>
-                <p>Report will be formatted for clarity and compliance.</p>
+              )}
+            </div>
+
+            {/* Right Column: Report Preview - Dark Theme */}
+            <div className="md:col-span-2">
+              <div className="bg-midnight-navy border border-white/10 rounded-xl p-6 text-white">
+                {/* Report Header */}
+                <div className="flex justify-between items-start mb-6 pb-4 border-b border-white/10">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-gradient-to-br from-cyan-mist to-growth-green rounded-lg flex items-center justify-center text-midnight-navy text-[10px] font-black">AX</div>
+                    <div>
+                      <span className="font-bold text-lg text-white">Aurixon.ai</span>
+                      <p className="text-[9px] text-stone-gray uppercase tracking-wider">Emissions Report</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <span className="px-2 py-0.5 bg-cyan-mist/20 text-cyan-mist text-[9px] font-bold rounded uppercase">Confidential</span>
+                    <p className="text-[10px] text-stone-gray mt-1">{new Date().toLocaleDateString('en-GB')}</p>
+                  </div>
+                </div>
+
+                {loadingSummary ? (
+                  <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                    <div className="w-8 h-8 border-2 border-cyan-mist border-t-transparent rounded-full animate-spin"></div>
+                    <p className="text-xs text-stone-gray uppercase tracking-wider">Loading data...</p>
+                  </div>
+                ) : summaryData ? (
+                  <div className="space-y-6">
+                    {/* Scope Metrics */}
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Scope 1 */}
+                      <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm font-bold text-white">Scope 01</p>
+                            <p className="text-[9px] text-stone-gray uppercase tracking-wider">Direct</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-2xl font-black text-white tabular-nums">{parseFloat(summaryData.scope1 || 0).toFixed(2)}</span>
+                            <span className="text-[9px] block text-stone-gray uppercase">MT CO₂e</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Scope 2 Location */}
+                      <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm font-bold text-white flex items-center gap-1">
+                              Scope 02 <span className="px-1 py-0.5 text-[8px] bg-stone-gray/30 text-stone-gray rounded">LOC</span>
+                            </p>
+                            <p className="text-[9px] text-stone-gray uppercase tracking-wider">Indirect Energy</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-2xl font-black text-white tabular-nums">{parseFloat(summaryData.scope2_location || summaryData.scope2 || 0).toFixed(2)}</span>
+                            <span className="text-[9px] block text-stone-gray uppercase">MT CO₂e</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Scope 2 Market */}
+                      <div className="bg-white/5 border border-cyan-mist/20 rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm font-bold text-white flex items-center gap-1">
+                              Scope 02 <span className="px-1 py-0.5 text-[8px] bg-cyan-mist/20 text-cyan-mist rounded">MKT</span>
+                            </p>
+                            <p className="text-[9px] text-stone-gray uppercase tracking-wider">Contractual</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-2xl font-black text-cyan-mist tabular-nums">{parseFloat(summaryData.scope2_market || 0).toFixed(2)}</span>
+                            <span className="text-[9px] block text-stone-gray uppercase">MT CO₂e</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Scope 3 */}
+                      <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <p className="text-sm font-bold text-white">Scope 03</p>
+                            <p className="text-[9px] text-stone-gray uppercase tracking-wider">Supply Chain</p>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-2xl font-black text-white tabular-nums">{parseFloat(summaryData.scope3 || 0).toFixed(2)}</span>
+                            <span className="text-[9px] block text-stone-gray uppercase">MT CO₂e</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Total */}
+                    <div className="bg-gradient-to-r from-cyan-mist/10 to-growth-green/10 border border-cyan-mist/20 rounded-lg p-4">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-xs text-stone-gray uppercase tracking-wider mb-1">Total Impact</p>
+                          <p className="text-[9px] text-cyan-mist">GHG Protocol Standard</p>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-4xl font-black text-white tabular-nums">{parseFloat(summaryData.total_emissions || summaryData.totalEmissions || 0).toFixed(2)}</span>
+                          <span className="ml-2 px-2 py-0.5 bg-cyan-mist text-midnight-navy text-[9px] font-bold rounded uppercase">NET MT CO₂e</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Status Indicator */}
+                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 rounded-full bg-growth-green animate-pulse"></div>
+                        <span className="text-[9px] text-stone-gray uppercase tracking-wider">Live Draft</span>
+                      </div>
+                      <span className="text-[9px] text-stone-gray">ID: {periodId?.substring(0,8).toUpperCase() || '7074C6F5'}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <ExclamationTriangleIcon className="h-12 w-12 text-stone-gray/50 mb-4" />
+                    <h3 className="text-sm font-bold text-white mb-1">Awaiting Data</h3>
+                    <p className="text-xs text-stone-gray max-w-xs">Add activities to generate your emissions summary.</p>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        ) : (
-          /* Report Generated - Download/Payment Options */
-          <div className="space-y-6">
-            {isPaid ? (
-               <div className="bg-green-900 border border-green-500 rounded-lg p-4 sm:p-6">
-                <div className="flex items-start gap-3">
-                  <span className="text-green-500 text-2xl">✓</span>
-                  <div>
-                    <h3 className="text-white font-semibold mb-1">Report Ready</h3>
-                    <p className="text-green-200 text-sm">
-                      Your emissions report is ready for download.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="bg-yellow-900/50 border border-yellow-500 rounded-lg p-4 sm:p-6">
-                <div className="flex items-start gap-3">
-                  <span className="text-yellow-500 text-2xl">⚠</span>
-                  <div>
-                    <h3 className="text-white font-semibold mb-1">Payment Required</h3>
-                    <p className="text-yellow-200 text-sm">
-                      Please complete payment to download your official report.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-            {isPaid && (
-              <div className="bg-midnight-navy-lighter border border-carbon-gray rounded-lg p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-white mb-4">Download Options</h2>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <button
-                    onClick={() => handleDownload('pdf')}
-                    className="py-3 px-4 bg-midnight-navy border border-cyan-mist text-cyan-mist rounded-lg hover:bg-midnight-navy-lighter transition-colors font-medium text-sm"
-                  >
-                    📄 Download PDF
-                  </button>
-                  <button
-                    onClick={() => handleDownload('csv')}
-                    className="py-3 px-4 bg-midnight-navy border border-cyan-mist text-cyan-mist rounded-lg hover:bg-midnight-navy-lighter transition-colors font-medium text-sm"
-                  >
-                    📊 Download CSV
-                  </button>
-                  <button
-                    onClick={() => handleDownload('excel')}
-                    className="py-3 px-4 bg-midnight-navy border border-cyan-mist text-cyan-mist rounded-lg hover:bg-midnight-navy-lighter transition-colors font-medium text-sm"
-                  >
-                    📈 Download Excel
-                  </button>
-                </div>
-              </div>
-            )}
-            {!isPaid && (
-              <div className="bg-midnight-navy-lighter border border-carbon-gray rounded-lg p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-white mb-3">Official Report with Payment</h2>
-                <p className="text-stone-gray text-sm mb-4">
-                  Pay €49.00 to download the official signed report with audit trail and certification.
-                </p>
-                <button
-                  onClick={handleProceedToPayment}
-                  className="w-full py-3 bg-growth-green text-midnight-navy font-bold rounded-lg hover:bg-opacity-90 transition-all"
-                >
-                  Proceed to Payment →
-                </button>
-              </div>
-            )}
-            <button
-              onClick={() => navigate('/reports')}
-              className="w-full py-2 text-cyan-mist hover:text-growth-green transition-colors"
-            >
-              View All Reports
-            </button>
           </div>
         )}
       </div>

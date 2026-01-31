@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import DataTable from '../components/common/DataTable';
 import { useToast } from '../components/common/Toast';
 import { activitiesAPI } from '../api/activitiesAPI';
 import { boundariesAPI } from '../api/boundariesAPI';
 import { useAuth } from "../contexts/AuthContext";
+import { TableCellsIcon } from '@heroicons/react/24/solid';
 
 const ACTIVITY_TYPES = [
   { key: 'stationary_combustion', label: 'Stationary Combustion' },
@@ -35,7 +36,8 @@ const ActivitiesListPage = () => {
   const navigate = useNavigate();
   const { user, hasPermission } = useAuth();
   const { success, error } = useToast();
-  const [selectedType, setSelectedType] = useState('stationary_combustion');
+  const { periodId, activityType: urlActivityType } = useParams();
+  const [selectedType, setSelectedType] = useState(urlActivityType || 'stationary_combustion');
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState('created_at');
@@ -53,7 +55,8 @@ const ActivitiesListPage = () => {
     try {
       const data = await activitiesAPI.listActivities(user.companyId, selectedType, {
         sortBy,
-        sortOrder
+        sortOrder,
+        reportingPeriodId: periodId
       });
       setActivities(data.activities || data || []);
     } catch (err) {
@@ -107,7 +110,14 @@ const ActivitiesListPage = () => {
     };
     
     fetchEnabledActivityTypes();
-  }, [user?.companyId, selectedType]);
+  }, [user?.companyId]); // Only fetch on mount or if company changes
+
+  // Sync selectedType with URL if it changes
+  useEffect(() => {
+    if (urlActivityType) {
+      setSelectedType(urlActivityType);
+    }
+  }, [urlActivityType]);
 
   useEffect(() => {
     fetchActivities();
@@ -169,7 +179,7 @@ const ActivitiesListPage = () => {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/activities/${selectedType}/${row.id}`);
+                navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`);
               }}
               className="text-compliance-blue hover:text-cyan-mist transition-colors"
             >
@@ -179,7 +189,7 @@ const ActivitiesListPage = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/activities/${selectedType}/${row.id}/edit`);
+                  navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`);
                 }}
                 className="text-cyan-mist hover:text-growth-green transition-colors"
               >
@@ -261,7 +271,7 @@ const ActivitiesListPage = () => {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                navigate(`/activities/${selectedType}/${row.id}`);
+                navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`);
               }}
               className="text-compliance-blue hover:text-cyan-mist transition-colors"
             >
@@ -271,7 +281,7 @@ const ActivitiesListPage = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  navigate(`/activities/${selectedType}/${row.id}/edit`);
+                  navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`);
                 }}
                 className="text-cyan-mist hover:text-growth-green transition-colors"
               >
@@ -328,14 +338,14 @@ const ActivitiesListPage = () => {
         render: (row) => (
           <div className="flex items-center gap-2">
             <button
-              onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }}
+              onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }}
               className="text-compliance-blue hover:text-cyan-mist transition-colors"
             >
               {t('common.view')}
             </button>
             {canEdit && (
               <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }}
                 className="text-cyan-mist hover:text-growth-green transition-colors"
               >
                 {t('common.edit')}
@@ -388,14 +398,14 @@ const ActivitiesListPage = () => {
         render: (row) => (
           <div className="flex items-center gap-2">
             <button
-              onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }}
+              onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }}
               className="text-compliance-blue hover:text-cyan-mist transition-colors"
             >
               {t('common.view')}
             </button>
             {canEdit && (
               <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }}
                 className="text-cyan-mist hover:text-growth-green transition-colors"
               >
                 {t('common.edit')}
@@ -440,14 +450,14 @@ const ActivitiesListPage = () => {
         render: (row) => (
           <div className="flex items-center gap-2">
             <button
-              onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }}
+              onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }}
               className="text-compliance-blue hover:text-cyan-mist transition-colors"
             >
               {t('common.view')}
             </button>
             {canEdit && (
               <button
-                onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }}
+                onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }}
                 className="text-cyan-mist hover:text-growth-green transition-colors"
               >
                 {t('common.edit')}
@@ -485,8 +495,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-2">
-            <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-            {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+            <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+            {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
             {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -520,8 +530,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-2">
-            <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-            {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+            <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+            {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
             {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -546,8 +556,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-1">
-             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
              {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -574,8 +584,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-1">
-             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
              {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -601,8 +611,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-1">
-             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
              {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -628,8 +638,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-1">
-             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
              {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -655,8 +665,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-1">
-             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
              {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -674,8 +684,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-1">
-             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
              {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -703,8 +713,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-2">
-            <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-            {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+            <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+            {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
             {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -733,8 +743,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-2">
-            <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-            {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+            <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+            {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
             {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -759,8 +769,8 @@ const ActivitiesListPage = () => {
         header: t('common.actions'),
         render: (row) => (
           <div className="flex items-center gap-2">
-             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
-             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
+             <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-compliance-blue hover:text-cyan-mist transition-colors">{t('common.view')}</button>
+             {canEdit && <button onClick={(e) => { e.stopPropagation(); navigate(`/activities/${selectedType}/${row.id}/edit${periodId ? `?periodId=${periodId}` : ''}`); }} className="text-cyan-mist hover:text-growth-green transition-colors">{t('common.edit')}</button>}
              {canDelete && <button onClick={(e) => { e.stopPropagation(); handleDelete(row.id); }} className="text-red-500 hover:text-red-400 transition-colors">{t('common.delete')}</button>}
           </div>
         )
@@ -832,64 +842,106 @@ const ActivitiesListPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-midnight-navy p-6">
+    <div className="min-h-screen bg-midnight-navy text-white p-6 lg:p-10">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              {t('activities.title')}
+        {/* Modernized Header */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-6">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 mb-1">
+               <div className="w-8 h-1 bg-cyan-mist rounded-full"></div>
+               <span className="text-[10px] uppercase font-black tracking-[0.3em] text-cyan-mist">Environmental Audit</span>
+            </div>
+            <h1 className="text-4xl lg:text-5xl font-black tracking-tight text-white italic">
+               operational<br/>activities.
             </h1>
-            <p className="text-gray-400">
-              {t('activities.subtitle')}
-            </p>
           </div>
           {canEdit && (
             <button
-              onClick={() => navigate(`/activities/${selectedType}/add`)}
-              className="btn-primary flex items-center justify-center gap-2 w-full sm:w-auto"
+              onClick={() => navigate(`/activities/${selectedType}/add${periodId ? `?periodId=${periodId}` : ''}`)}
+              className="px-8 py-4 bg-cyan-mist text-midnight-navy font-black rounded-2xl hover:bg-growth-green transition-all shadow-xl hover:shadow-cyan-mist/20 active:scale-95 flex items-center gap-2 group"
             >
-              <span className="text-xl">+</span>
+              <span className="text-2xl group-hover:rotate-90 transition-transform">+</span>
               {t('activities.addActivity')}
             </button>
           )}
         </div>
 
+        {/* Back Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => periodId ? navigate('/reporting-periods') : navigate('/dashboard')}
+            className="text-cyan-mist hover:text-growth-green flex items-center gap-2 transition-colors text-sm"
+          >
+            ← {periodId ? 'Back to Active Reports' : 'Back to Dashboard'}
+          </button>
+        </div>
+
         {/* Activity Type Selector with Scope Grouping */}
-        <div className="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-6 mb-8 shadow-lg">
-          <label className="block text-sm font-medium text-cyan-mist mb-3 uppercase tracking-wider">
-            {t('activities.selectType')}
-          </label>
-          <div className="relative">
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full px-5 py-3 bg-midnight-navy border border-gray-600 rounded-lg text-white appearance-none focus:outline-none focus:ring-2 focus:ring-cyan-mist focus:border-transparent text-lg"
-            >
-              {Object.entries(groupedTypes).map(([scope, types]) => (
-                types.length > 0 && (
-                  <optgroup key={scope} label={scope} className="bg-midnight-navy">
-                    {types.map((type) => (
-                      <option key={type.key} value={type.key}>
-                        {t(`activityTypes.${type.key}`, type.label)}
-                      </option>
+        {periodId ? (
+          <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 mb-10 shadow-xl relative overflow-hidden group">
+             <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-mist/5 rounded-full -translate-y-16 translate-x-16 blur-2xl group-hover:bg-cyan-mist/10 transition-all"></div>
+             <div className="flex items-center gap-6">
+                <div className="p-4 bg-cyan-mist/10 rounded-2xl border border-cyan-mist/20 shadow-inner">
+                   <TableCellsIcon className="h-10 w-10 text-cyan-mist" />
+                </div>
+                <div>
+                   <div className="flex items-center gap-2 mb-1">
+                      <span className="w-2 h-2 rounded-full bg-cyan-mist animate-pulse"></span>
+                      <label className="text-[10px] font-black text-cyan-mist uppercase tracking-[0.2em] opacity-80">
+                         {t('activities.currentCategory', 'Operational Category')}
+                      </label>
+                   </div>
+                   <h2 className="text-3xl font-black text-white tracking-tight">
+                      {t(`activityTypes.${selectedType}`, ACTIVITY_TYPES.find(t => t.key === selectedType)?.label)}
+                   </h2>
+                </div>
+             </div>
+          </div>
+        ) : (
+          <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 mb-10 shadow-2xl relative">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div className="flex-1">
+                <label className="block text-[10px] font-black text-cyan-mist mb-4 uppercase tracking-[0.2em] ml-1">
+                  {t('activities.selectType', 'Select Operational Data Stream')}
+                </label>
+                <div className="relative group">
+                  <select
+                    value={selectedType}
+                    onChange={(e) => setSelectedType(e.target.value)}
+                    className="w-full px-6 py-4 bg-midnight-navy-lighter border border-white/10 rounded-2xl text-white appearance-none focus:outline-none focus:ring-2 focus:ring-cyan-mist transition-all text-lg font-bold cursor-pointer hover:border-white/20"
+                  >
+                    {Object.entries(groupedTypes).map(([scope, types]) => (
+                      types.length > 0 && (
+                        <optgroup key={scope} label={scope.toUpperCase()} className="bg-midnight-navy-lighter text-cyan-mist font-black py-4">
+                          {types.map((type) => (
+                            <option key={type.key} value={type.key} className="text-white font-medium py-2">
+                              {t(`activityTypes.${type.key}`, type.label)}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )
                     ))}
-                  </optgroup>
-                )
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-white">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </select>
+                  <div className="absolute inset-y-0 right-0 flex items-center px-6 pointer-events-none text-cyan-mist">
+                    <svg className="w-6 h-6 transform group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col justify-end">
+                <p className="text-xs text-stone-gray flex items-center gap-2 bg-white/5 p-4 rounded-xl border border-white/5">
+                   <div className="w-2 h-2 rounded-full bg-success"></div>
+                   <span>
+                      {t('activities.boundarySettingsInfo', 'Reporting boundaries active.')}
+                      <button onClick={() => navigate('/setup')} className="text-cyan-mist hover:underline ml-2 font-bold">
+                        {t('activities.editSettings', 'Configure')}
+                      </button>
+                   </span>
+                </p>
+              </div>
             </div>
           </div>
-          <p className="text-sm text-gray-400 mt-4 flex items-center gap-2">
-             <span className="w-2 h-2 rounded-full bg-success"></span>
-             {t('activities.boundarySettingsInfo')}
-             <button onClick={() => navigate('/setup')} className="text-cyan-mist hover:underline ml-1">
-               {t('activities.editSettings')}
-             </button>
-          </p>
-        </div>
+        )}
 
         {/* Activities Table */}
         <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden shadow-xl">
@@ -904,7 +956,7 @@ const ActivitiesListPage = () => {
               sortBy={sortBy}
               sortOrder={sortOrder}
               onSort={handleSort}
-              onRowClick={(row) => navigate(`/activities/${selectedType}/${row.id}`)}
+              onRowClick={(row) => navigate(`/activities/${selectedType}/${row.id}${periodId ? `?periodId=${periodId}` : ''}`)}
               emptyMessage={
                 <div className="text-center py-12">
                    <p className="text-gray-400 text-lg mb-4">{t('activities.noActivities')}</p>

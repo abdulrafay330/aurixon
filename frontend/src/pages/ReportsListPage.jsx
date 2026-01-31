@@ -45,27 +45,36 @@ const ReportsListPage = () => {
   };
 
   const getStatusBadge = (status, paymentStatus) => {
-    // effectiveStatus logic: if paid, show as generated/paid even if report status is draft
-    let effectiveStatus = status;
-    if (paymentStatus === 'succeeded' && status === 'draft') {
-        effectiveStatus = 'generated'; 
+    // If paid, show PAID badge
+    if (paymentStatus === 'succeeded') {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-growth-green text-midnight-navy shadow-sm">
+          ✓ PAID
+        </span>
+      );
+    }
+    
+    // Generated but not paid
+    if (status === 'draft' || status === 'generated') {
+      return (
+        <span className="px-3 py-1 rounded-full text-xs font-bold bg-yellow-500 text-midnight-navy shadow-sm">
+          UNPAID
+        </span>
+      );
     }
 
-    if (!effectiveStatus) return null;
+    // Default status display
     const styles = {
       completed: 'bg-growth-green text-midnight-navy',
-      pending: 'bg-yellow-500 text-midnight-navy',
+      pending: 'bg-blue-500 text-white',
       failed: 'bg-red-500 text-white',
-      generated: 'bg-growth-green text-midnight-navy', 
-      draft: 'bg-stone-gray text-midnight-navy'
     };
     
-    // Default to gray if status not matched
-    const style = styles[effectiveStatus] || 'bg-stone-gray text-midnight-navy';
+    const style = styles[status] || 'bg-stone-gray text-midnight-navy';
     
     return (
       <span className={`px-3 py-1 rounded-full text-xs font-medium ${style}`}>
-        {effectiveStatus.toUpperCase()}
+        {(status || 'draft').toUpperCase()}
       </span>
     );
   };
@@ -166,7 +175,10 @@ const ReportsListPage = () => {
     {
       key: 'actions',
       header: t('common.actions'),
-      render: (row) => (
+      render: (row) => {
+        const isPaid = row.payment_status === 'succeeded';
+        
+        return (
           <div className="flex items-center gap-2">
             <button
               onClick={(e) => {
@@ -177,24 +189,40 @@ const ReportsListPage = () => {
             >
               {t('common.view')}
             </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDownload(row.reporting_period_id, 'PDF');
-              }}
-              className="text-cyan-mist hover:text-growth-green transition-colors"
-            >
-              PDF
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDownload(row.reporting_period_id, 'CSV');
-              }}
-              className="text-growth-green hover:text-cyan-mist transition-colors"
-            >
-              CSV
-            </button>
+            
+            {isPaid ? (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(row.reporting_period_id, 'PDF');
+                  }}
+                  className="text-cyan-mist hover:text-growth-green transition-colors"
+                >
+                  PDF
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDownload(row.reporting_period_id, 'CSV');
+                  }}
+                  className="text-growth-green hover:text-cyan-mist transition-colors"
+                >
+                  CSV
+                </button>
+              </>
+            ) : (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/reports/generate?periodId=${row.reporting_period_id}`);
+                }}
+                className="px-2 py-1 bg-yellow-500 text-midnight-navy text-xs font-bold rounded hover:bg-yellow-400 transition-colors"
+              >
+                Pay & Download
+              </button>
+            )}
+            
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -207,7 +235,8 @@ const ReportsListPage = () => {
               Delete
             </button>
           </div>
-      ),
+        );
+      },
     },
   ];
 

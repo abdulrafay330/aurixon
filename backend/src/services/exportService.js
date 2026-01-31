@@ -535,6 +535,183 @@ export async function generatePDFReport(periodId, options = {}) {
     
     doc.moveDown(2);
 
+    // --- Detailed Activity Entries by Scope (NEW SECTION) ---
+    if (includeDetails) {
+      // Fetch all individual activity entries with their calculation results
+      const entriesQuery = await pool.query(
+        `SELECT 
+           ec.id,
+           ec.activity_type,
+           ec.activity_id,
+           ec.co2e_metric_tons,
+           COALESCE(ec.location_based_co2e_mt, 0) as location_based_co2e_mt,
+           COALESCE(ec.market_based_co2e_mt, 0) as market_based_co2e_mt,
+           ec.co2_kg,
+           ec.ch4_g,
+           ec.n2o_g,
+           ec.calculation_metadata,
+           ec.created_at
+         FROM emission_calculations ec
+         WHERE ec.reporting_period_id = $1
+         ORDER BY ec.activity_type, ec.created_at`,
+        [periodId]
+      );
+
+      const entries = entriesQuery.rows;
+
+      if (entries.length > 0) {
+        // Start new page for detailed entries
+        doc.addPage();
+        drawHeader();
+        doc.moveDown(4);
+
+        doc.fillColor(COLORS.primary).fontSize(18).font('Helvetica-Bold')
+           .text('Detailed Activity Entries', { align: 'center' });
+        doc.moveDown(0.5);
+        doc.fillColor(COLORS.secondary).fontSize(10).font('Helvetica')
+           .text('Complete listing of all emission sources with individual calculations', { align: 'center' });
+        doc.moveDown(1.5);
+        drawLine(doc, doc.y);
+        doc.moveDown(1.5);
+
+        // Group entries by scope
+        const scopeGroups = {
+          scope1: { 
+            title: 'SCOPE 1 — DIRECT EMISSIONS',
+            subtitle: 'Emissions from owned or controlled sources',
+            types: ['stationary_combustion', 'mobile_sources', 'refrigeration_ac', 'fire_suppression', 'purchased_gases'],
+            entries: [],
+            color: '#10b981'
+          },
+          scope2: { 
+            title: 'SCOPE 2 — INDIRECT EMISSIONS (ENERGY)',
+            subtitle: 'Emissions from purchased electricity, steam, heating, and cooling',
+            types: ['electricity', 'steam'],
+            entries: [],
+            color: '#06b6d4'
+          },
+          scope3: { 
+            title: 'SCOPE 3 — OTHER INDIRECT EMISSIONS',
+            subtitle: 'All other indirect emissions in the value chain',
+            types: [], // Everything else
+            entries: [],
+            color: '#8b5cf6'
+          }
+        };
+
+        // Categorize entries
+        entries.forEach(entry => {
+          if (scopeGroups.scope1.types.includes(entry.activity_type)) {
+            scopeGroups.scope1.entries.push(entry);
+          } else if (scopeGroups.scope2.types.includes(entry.activity_type)) {
+            scopeGroups.scope2.entries.push(entry);
+          } else {
+            scopeGroups.scope3.entries.push(entry);
+          }
+        });
+
+        // Render each scope section
+        for (const [scopeKey, scope] of Object.entries(scopeGroups)) {
+          if (scope.entries.length === 0) continue;
+
+          // Check for page break
+          if (doc.y > 650) {
+            doc.addPage();
+            drawHeader();
+            doc.moveDown(4);
+          }
+
+          // Scope Header
+          doc.roundedRect(50, doc.y, 495, 40, 5).fill(scope.color);
+          doc.fillColor('white').fontSize(12).font('Helvetica-Bold')
+             .text(scope.title, 60, doc.y + 8);
+          doc.fillColor('white').fontSize(9).font('Helvetica')
+             .text(scope.subtitle, 60, doc.y + 22);
+          doc.moveDown(3);
+
+          // Calculate scope total
+          let scopeTotal = 0;
+          if (scopeKey === 'scope2') {
+            scopeTotal = scope.entries.reduce((sum, e) => sum + parseFloat(e.market_based_co2e_mt || e.co2e_metric_tons || 0), 0);
+          } else {
+            scopeTotal = scope.entries.reduce((sum, e) => sum + parseFloat(e.co2e_metric_tons || 0), 0);
+          }
+
+          // Entries table header
+          const tableTop = doc.y;
+          doc.rect(50, tableTop, 495, 22).fill(COLORS.bgLight);
+          doc.fillColor(COLORS.secondary).fontSize(8).font('Helvetica-Bold');
+          doc.text('SOURCE', 55, tableTop + 7);
+          doc.text('TYPE', 180, tableTop + 7);
+          doc.text('CO₂e (MT)', 380, tableTop + 7, { width: 70, align: 'right' });
+          doc.text('METHOD', 455, tableTop + 7, { width: 85, align: 'right' });
+          doc.moveDown(1.5);
+
+          // Entry rows
+          scope.entries.forEach((entry, idx) => {
+            if (doc.y > 720) {
+              doc.addPage();
+              drawHeader();
+              doc.moveDown(4);
+            }
+
+            const rowY = doc.y;
+            if (idx % 2 === 0) {
+              doc.rect(50, rowY - 2, 495, 18).fill('#f8fafc');
+            }
+
+            const emissions = scopeKey === 'scope2' 
+              ? parseFloat(entry.market_based_co2e_mt || entry.co2e_metric_tons || 0)
+              : parseFloat(entry.co2e_metric_tons || 0);
+
+            // Extract meaningful info from calculation_metadata
+            const meta = entry.calculation_metadata || {};
+            const sourceId = meta.source_id || meta.vehicle_id || meta.equipment_id || entry.activity_id?.substring(0, 8) || 'Entry';
+            const quantity = meta.quantity || meta.amount || meta.distance || meta.consumption || '';
+            const unit = meta.unit || meta.fuel_unit || '';
+            const methodLabel = quantity && unit ? `${quantity} ${unit}` : 'Calculated';
+
+            doc.fillColor(COLORS.text).fontSize(8).font('Helvetica');
+            doc.text(sourceId, 55, rowY, { width: 120, ellipsis: true });
+            doc.text(entry.activity_type.replace(/_/g, ' '), 180, rowY, { width: 190, ellipsis: true });
+            doc.text(emissions.toFixed(4), 380, rowY, { width: 70, align: 'right' });
+            doc.text(methodLabel, 455, rowY, { width: 85, align: 'right' });
+
+            doc.moveDown(0.9);
+          });
+
+          // Scope subtotal
+          doc.moveDown(0.5);
+          doc.roundedRect(320, doc.y, 225, 25, 3).fill(scope.color + '20');
+          doc.fillColor(scope.color).fontSize(10).font('Helvetica-Bold')
+             .text(`Scope Total: ${scopeTotal.toFixed(3)} MT CO₂e`, 330, doc.y + 7);
+          doc.moveDown(2.5);
+        }
+
+        // Summary box at the bottom
+        if (doc.y > 650) {
+          doc.addPage();
+          drawHeader();
+          doc.moveDown(4);
+        }
+
+        doc.roundedRect(50, doc.y, 495, 60, 8).fill(COLORS.primary);
+        const summaryY = doc.y;
+        doc.fillColor('white').fontSize(10).font('Helvetica')
+           .text('TOTAL CARBON FOOTPRINT', 70, summaryY + 12);
+        doc.fillColor('white').fontSize(24).font('Helvetica-Bold')
+           .text(`${totalEmissions.toFixed(2)} MT CO₂e`, 70, summaryY + 28);
+        
+        doc.fillColor('white').fontSize(8).font('Helvetica')
+           .text(`Based on ${entries.length} activity entries`, 350, summaryY + 20);
+        doc.text(`Calculated: ${new Date().toLocaleDateString()}`, 350, summaryY + 35);
+        
+        doc.moveDown(5);
+      }
+    }
+
+    doc.moveDown(2);
+
     // --- Recommendations Section ---
     if (trafficLightScore.recommendations && trafficLightScore.recommendations.length > 0) {
         doc.fillColor(COLORS.primary).fontSize(16).font('Helvetica-Bold').text(text.recommendations);

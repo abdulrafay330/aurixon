@@ -1459,3 +1459,50 @@ export async function listAllActivitiesByPeriod(req, res, next) {
     next(error);
   }
 }
+
+/**
+ * Get activity counts by type for a reporting period
+ * GET /api/reporting-periods/:periodId/activity-counts
+ */
+export async function getActivityCountsByPeriod(req, res, next) {
+  try {
+    const { periodId } = req.params;
+    const companyId = req.params.companyId;
+
+    const activityTableMap = {
+      stationary_combustion: 'stationary_combustion_activities',
+      mobile_sources: 'mobile_sources_activities',
+      refrigeration_ac: 'refrigeration_ac_activities',
+      fire_suppression: 'fire_suppression_activities',
+      purchased_gases: 'purchased_gases_activities',
+      electricity: 'electricity_activities',
+      steam: 'steam_activities',
+      business_travel_air: 'business_travel_activities',
+      business_travel_rail: 'business_travel_activities',
+      business_travel_road: 'business_travel_activities',
+      business_travel_hotel: 'business_travel_hotel',
+      commuting: 'employee_commuting_activities',
+      transportation_distribution: 'transportation_distribution_activities',
+      waste: 'waste_activities',
+      offsets: 'offsets_activities',
+    };
+
+    const counts = {};
+
+    // Grouping by "base" type for UI simplicity
+    for (const [type, table] of Object.entries(activityTableMap)) {
+      const result = await queryOne(
+        `SELECT COUNT(*) as count FROM ${table} WHERE company_id = $1 AND reporting_period_id = $2`,
+        [companyId, periodId]
+      );
+      counts[type] = parseInt(result.count || 0);
+    }
+
+    res.json({
+      reportingPeriodId: periodId,
+      counts,
+    });
+  } catch (error) {
+    next(error);
+  }
+}

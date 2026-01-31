@@ -89,7 +89,7 @@ const DataTable = ({
             placeholder={t('common.search') || 'Search...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 bg-midnight-navy-lighter border border-carbon-gray rounded-lg text-off-white focus:outline-none focus:border-cyan-mist"
+            className="w-full px-4 py-2 bg-primary-light border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-cyan-mist"
           />
         </div>
       )}

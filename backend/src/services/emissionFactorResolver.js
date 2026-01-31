@@ -143,7 +143,6 @@ async function getMobileSourceFactors(vehicleType, vehicleYear, fuelType, standa
       
       if (fallbackResult.rows.length > 0) {
         result = fallbackResult;
-        console.log(`[EmissionFactorResolver] Using fallback factor from year ${result.rows[0].vehicle_year}`);
       }
     }
     
@@ -152,7 +151,6 @@ async function getMobileSourceFactors(vehicleType, vehicleYear, fuelType, standa
     // Only use if DB returns no results
     // ------------------------------------------------------------------
     if (result.rows.length === 0) {
-      console.log(`[EmissionFactorResolver] DB lookup failed. Checking hardcoded backups for: ${vehicleType} / ${fuelType}`);
       
       // Normalize keys for case-insensitive matching
       const vType = vehicleType.toLowerCase();

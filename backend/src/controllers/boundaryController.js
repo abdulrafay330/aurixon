@@ -451,15 +451,18 @@ export async function submitBoundaryAnswers(req, res, next) {
       }
 
       // 2. Update the denormalized 'boundary_questions' table for the current Reporting Period
-      // First, find the active/latest reporting period for this company
-      const periodResult = await client.query(
-        `SELECT id, status FROM reporting_periods 
-         WHERE company_id = $1 
-         ORDER BY created_at DESC LIMIT 1`,
-        [companyId]
-      );
-
-      let periodId = periodResult.rows[0]?.id;
+      // Use provided periodId or find the active/latest reporting period for this company
+      let periodId = req.body.periodId;
+      
+      if (!periodId) {
+        const periodResult = await client.query(
+          `SELECT id, status FROM reporting_periods 
+           WHERE company_id = $1 
+           ORDER BY created_at DESC LIMIT 1`,
+          [companyId]
+        );
+        periodId = periodResult.rows[0]?.id;
+      }
       
       if (periodId) {
           // Check if boundary_questions record exists

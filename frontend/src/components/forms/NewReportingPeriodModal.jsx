@@ -42,9 +42,10 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
   ];
 
   const periodTypes = [
-    { value: 'annual', label: t('period.types.annual', 'Annual (Calendar Year)') },
-    { value: 'fiscal', label: t('period.types.fiscal', 'Fiscal Year') },
-    { value: 'custom', label: t('period.types.custom', 'Custom Period') },
+    { value: 'annual', label: t('period.types.annual', 'Annual') },
+    { value: 'quarterly', label: t('period.types.quarterly', 'Quarterly') },
+    { value: 'monthly', label: t('period.types.monthly', 'Monthly') },
+    { value: 'custom', label: t('period.types.custom', 'Custom') },
   ];
 
   const handleChange = (e) => {
@@ -165,7 +166,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h2 className="text-2xl font-bold text-gray-900">
-              {t('reportingPeriod.createNew', 'Create New Reporting Period')}
+              {t('reportingPeriod.createNew', 'Create New Report')}
             </h2>
             <button
               onClick={handleClose}
@@ -180,7 +181,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
             {/* Period Label */}
             <div>
               <label htmlFor="label" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('reportingPeriod.label', 'Period Label')} *
+                {t('reportingPeriod.label', 'Report Label')} *
               </label>
               <input
                 type="text"
@@ -199,7 +200,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
             {/* Period Type */}
             <div>
               <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('reportingPeriod.type', 'Period Type')} *
+                {t('reportingPeriod.type', 'Report Type')} *
               </label>
               <select
                 id="type"
@@ -330,7 +331,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
               >
                 {loading
                   ? t('common.creating', 'Creating...')
-                  : t('reportingPeriod.create', 'Create Period')}
+                  : t('reportingPeriod.create', 'Create Report')}
               </button>
             </div>
           </form>

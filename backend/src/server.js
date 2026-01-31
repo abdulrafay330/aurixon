@@ -76,7 +76,6 @@ const dbReady = await testConnection();
 if (!dbReady) {
   console.error('[CRITICAL] Cannot connect to database');
   console.error('[ERROR] Please ensure DATABASE_URL is configured and PostgreSQL is running');
-  console.error('[ERROR] DATABASE_URL:', process.env.DATABASE_URL);
   process.exit(1);
 }
 

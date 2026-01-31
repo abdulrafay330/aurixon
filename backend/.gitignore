@@ -1,8 +1,11 @@
 node_modules
+# ENV
 .env
 .env.local
-.env.example
 .env.test
+!/.env.example
+
+# Source
 src/__tests__
 jest.config.js
 dist
@@ -12,11 +15,7 @@ build
 .vscode
 .idea
 test_api.js
-ACTIVITY_DATA_LAYER.md
-AUTHENTICATION.md
-BACKEND_SERVICES.md
-CALCULATION_ENGINE.md
-FILES_QUICK_REFERENCE.md
 tests/
-scripts/
 db/
+scripts/
+.env.example

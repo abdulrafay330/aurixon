@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { boundariesAPI } from '../api/boundariesAPI';
+import apiClient from '../api/apiClient';
 import { useToast } from '../components/common/Toast';
 import { useAuth } from '../contexts/AuthContext';
 
 const BoundaryQuestionsWizard = () => {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { periodId } = useParams();
     const { success, error } = useToast();
     const { user, refreshUser } = useAuth(); // Assuming refreshUser updates the user context
     const [questions, setQuestions] = useState([]);
@@ -24,24 +26,49 @@ const BoundaryQuestionsWizard = () => {
                 const qs = data.questions || data;
                 setQuestions(qs);
 
-                // Try to fetch existing answers for this user/company
                 let existingAnswers = null;
-                try {
-                    const companyId = user.companyId || user.companies?.[0]?.companyId;
-                    if (companyId) {
+
+                // Try to fetch existing answers for THIS specific report period
+                if (periodId && user.companyId) {
+                    try {
+                        const res = await apiClient.get(`/companies/${user.companyId}/reporting-periods/${periodId}/boundary-questions`);
+                        if (res.data && res.data.boundaryQuestions) {
+                            const bq = res.data.boundaryQuestions;
+                            const mappedAnswers = {};
+                            
+                            // Map denormalized has_ fields to question IDs
+                            qs.forEach(q => {
+                                // The category in reference questions matches the key in denormalized BQ (without has_ prefix)
+                                const category = q.category;
+                                if (bq[category] !== undefined) {
+                                    mappedAnswers[q.id] = bq[category];
+                                } else {
+                                    mappedAnswers[q.id] = true; // Default
+                                }
+                            });
+                            existingAnswers = mappedAnswers;
+                        }
+                    } catch (e) {
+                        console.log("No period-specific boundaries found, falling back to global/defaults");
+                    }
+                }
+
+                // If no period-specific answers, check global/onboarding answers
+                if (!existingAnswers) {
+                    try {
                         const res = await boundariesAPI.getUserAnswers(user.id);
-                        if (res && Array.isArray(res)) {
+                        if (res && Array.isArray(res) && res.length > 0) {
                             existingAnswers = {};
                             res.forEach(ans => {
                                 existingAnswers[ans.boundary_question_id] = ans.answer;
                             });
                         }
+                    } catch (e) {
+                         // No global answers either
                     }
-                } catch (e) {
-                    // No answers yet, that's fine
                 }
 
-                // If no answers, default all to true
+                // Final fallback: all true
                 if (!existingAnswers) {
                     const defaultAnswers = {};
                     qs.forEach(q => { defaultAnswers[q.id] = true; });
@@ -77,6 +104,8 @@ const BoundaryQuestionsWizard = () => {
     const handleBack = () => {
         if (currentStep > 0) {
             setCurrentStep(prev => prev - 1);
+        } else {
+            navigate(-1);
         }
     };
 
@@ -95,6 +124,7 @@ const BoundaryQuestionsWizard = () => {
             // Format answers for API
             const answersPayload = {
                 companyId: companyId,
+                periodId: periodId,
                 answers: Object.entries(answers).map(([questionId, answer]) => ({
                     boundary_question_id: questionId,
                     answer: answer
@@ -107,7 +137,8 @@ const BoundaryQuestionsWizard = () => {
             // Force refresh of user/company status so OnboardingGuard knows we are done
             if (refreshUser) await refreshUser();
             
-            navigate('/dashboard');
+            const targetPeriodId = periodId || user.companyId; // fallback or logic
+            navigate(`/reports/${periodId || 'latest'}/activities`);
         } catch (err) {
             console.error(err);
             error(t('boundary.submitError', 'Failed to save boundary questions'));
@@ -141,17 +172,28 @@ const BoundaryQuestionsWizard = () => {
                 {/* Header / Progress */}
                 <div className="bg-midnight-navy p-6 border-b border-carbon-gray">
                     <h1 className="text-2xl font-bold text-off-white mb-2">
-                        {t('boundary.setupTitle', 'Company Setup')}
+                        {t('boundary.setupTitle', 'Emission Sources Setup')}
                     </h1>
-                    <div className="w-full bg-carbon-gray h-2 rounded-full mt-4">
+                    <p className="text-stone-gray text-sm mb-4">
+                        Configure which emission sources apply to your report
+                    </p>
+                    <div className="w-full bg-carbon-gray h-2 rounded-full">
                         <div 
                             className="bg-growth-green h-2 rounded-full transition-all duration-300"
                             style={{ width: `${progress}%` }}
                         ></div>
                     </div>
-                    <p className="text-stone-gray text-sm mt-2 text-right">
-                        Step {currentStep + 1} of {questions.length}
-                    </p>
+                    <div className="flex justify-between items-center mt-2">
+                        <button
+                            onClick={() => navigate(periodId ? '/reporting-periods' : '/dashboard')}
+                            className="text-xs text-stone-gray hover:text-red-400 transition-colors"
+                        >
+                            ✕ Cancel & Exit
+                        </button>
+                        <p className="text-stone-gray text-sm">
+                            Step {currentStep + 1} of {questions.length}
+                        </p>
+                    </div>
                 </div>
 
                 {/* Content */}
