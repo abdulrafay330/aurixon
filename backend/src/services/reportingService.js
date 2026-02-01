@@ -51,7 +51,12 @@ async function getEmissionsTrends(companyId, options = {}) {
         rp.period_end_date,
         ec.activity_type,
         CASE 
-          WHEN ec.activity_type::text IN ('stationary_combustion', 'mobile_sources', 'refrigeration_ac', 'fire_suppression', 'purchased_gases') THEN 'scope_1'
+          WHEN ec.activity_type::text IN (
+            'stationary_combustion', 'mobile_sources', 
+            'refrigeration_ac', 'refrigeration_ac_material_balance', 'refrigeration_ac_simplified_material_balance', 'refrigeration_ac_screening_method', 
+            'fire_suppression', 'fire_suppression_material_balance', 'fire_suppression_simplified_material_balance', 'fire_suppression_screening_method', 
+            'purchased_gases'
+          ) THEN 'scope_1'
           WHEN ec.activity_type::text IN ('electricity', 'steam') THEN 'scope_2'
           ELSE 'scope_3'
         END as scope,
@@ -116,7 +121,12 @@ async function getScopeBreakdown(reportingPeriodId) {
       )
       SELECT 
         CASE 
-          WHEN activity_type::text IN ('stationary_combustion', 'mobile_sources', 'refrigeration_ac', 'fire_suppression', 'purchased_gases') THEN 'scope_1'
+          WHEN activity_type::text IN (
+            'stationary_combustion', 'mobile_sources', 
+            'refrigeration_ac', 'refrigeration_ac_material_balance', 'refrigeration_ac_simplified_material_balance', 'refrigeration_ac_screening_method', 
+            'fire_suppression', 'fire_suppression_material_balance', 'fire_suppression_simplified_material_balance', 'fire_suppression_screening_method', 
+            'purchased_gases'
+          ) THEN 'scope_1'
           WHEN activity_type::text IN ('electricity', 'steam') THEN 'scope_2'
           ELSE 'scope_3'
         END as scope,

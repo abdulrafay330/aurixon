@@ -361,7 +361,12 @@ export async function generateAlerts(companyId, thresholds = {}) {
   const scopeQuery = await pool.query(
     `SELECT 
        CASE 
-         WHEN ec.activity_type IN ('stationary_combustion', 'mobile_sources', 'refrigeration_ac', 'fire_suppression', 'purchased_gases') THEN 'Scope 1'
+         WHEN ec.activity_type IN (
+           'stationary_combustion', 'mobile_sources', 
+           'refrigeration_ac', 'refrigeration_ac_material_balance', 'refrigeration_ac_simplified_material_balance', 'refrigeration_ac_screening_method', 
+           'fire_suppression', 'fire_suppression_material_balance', 'fire_suppression_simplified_material_balance', 'fire_suppression_screening_method', 
+           'purchased_gases'
+         ) THEN 'Scope 1'
          WHEN ec.activity_type IN ('electricity', 'steam') THEN 'Scope 2'
          ELSE 'Scope 3'
        END as scope,

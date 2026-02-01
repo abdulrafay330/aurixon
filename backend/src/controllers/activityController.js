@@ -258,17 +258,36 @@ export async function autoCalculateEmissions(activityType, activityData, activit
     
     // SCOPE 1: Mobile Sources
     else if (activityType === 'mobile_sources') {
+      let fuelType = activityData.fuel_type;
+
+      // Auto-detect fuel type from vehicle string if not provided
+      if (!fuelType && activityData.vehicle_type) {
+        const vType = activityData.vehicle_type.toLowerCase();
+        if (vType.includes('diesel')) fuelType = 'Diesel';
+        else if (vType.includes('gasoline')) fuelType = 'Gasoline';
+        else if (vType.includes('cng') || vType.includes('natural gas')) fuelType = 'CNG';
+        else if (vType.includes('lpg') || vType.includes('propane')) fuelType = 'LPG';
+        else if (vType.includes('lng')) fuelType = 'LNG';
+        else if (vType.includes('ethanol')) fuelType = 'Ethanol';
+        else if (vType.includes('methanol')) fuelType = 'Methanol';
+        else if (vType.includes('biodiesel')) fuelType = 'Biodiesel';
+        else if (vType.includes('jet fuel')) fuelType = 'Jet Fuel';
+        else if (vType.includes('aviation gasoline')) fuelType = 'Aviation Gasoline';
+        else if (vType.includes('residual fuel oil')) fuelType = 'Residual Fuel Oil';
+        else fuelType = 'Gasoline'; // Default fallback
+      }
+
       emissionFactors = await emissionFactorResolver.getMobileSourceFactors(
         activityData.vehicle_type,
-        activityData.vehicle_year || 2021, // Default to recent year if missing
-        activityData.fuel_type || 'Gasoline', 
+        activityData.vehicle_year || 2021, 
+        fuelType, 
         'GHG_PROTOCOL'
       );
       
       calculationResult = calculationEngine.calculateMobileSources({
         vehicleType: activityData.vehicle_type,
         vehicleYear: activityData.vehicle_year || 2021,
-        fuelType: activityData.fuel_type || 'Gasoline',
+        fuelType: fuelType,
         fuelUsage: parseFloat(activityData.fuel_usage),
         unit: activityData.units,
         emissionFactors
@@ -359,15 +378,7 @@ export async function autoCalculateEmissions(activityType, activityData, activit
       const transferredAmountLb = parseFloat(activityData.transferred_amount_lb) || 0;
       const capacityChangeLb = parseFloat(activityData.capacity_change_lb) || 0;
       
-      // Get GWP
-      let gwp = null;
-      try {
-        const gwpData = await emissionFactorResolver.getRefrigerantGWP(suppressantType, 'GHG_PROTOCOL');
-        gwp = gwpData.gwp;
-      } catch (error) {
-        console.warn('[AutoCalculate] Fire Suppression GWP lookup failed, using fallback:', error.message);
-        gwp = getSuppressantGWP(suppressantType);
-      }
+      const gwp = await getGWP(suppressantType);
       
       // Formula per Excel Table 1: Emissions (lb) = (Inventory Change + Transferred + Capacity Change) × GWP
       const emissionsLb = (inventoryChangeLb + transferredAmountLb + capacityChangeLb) * gwp;
@@ -399,15 +410,7 @@ export async function autoCalculateEmissions(activityType, activityData, activit
       const disposedUnitsCapacityLb = parseFloat(activityData.disposed_units_capacity_lb) || 0;
       const disposedUnitsRecoveredLb = parseFloat(activityData.disposed_units_recovered_lb) || 0;
       
-      // Get GWP
-      let gwp = null;
-      try {
-        const gwpData = await emissionFactorResolver.getRefrigerantGWP(suppressantType, 'GHG_PROTOCOL');
-        gwp = gwpData.gwp;
-      } catch (error) {
-        console.warn('[AutoCalculate] Fire Suppression GWP lookup failed, using fallback:', error.message);
-        gwp = getSuppressantGWP(suppressantType);
-      }
+      const gwp = await getGWP(suppressantType);
       
       // Formula per Excel Table 2: Emissions (lb) = (Charge - New Capacity + Recharge + Disposed Capacity - Recovered) × GWP
       const emissionsLb = (newUnitsChargeLb - newUnitsCapacityLb + existingUnitsRechargeLb + disposedUnitsCapacityLb - disposedUnitsRecoveredLb) * gwp;
@@ -438,15 +441,7 @@ export async function autoCalculateEmissions(activityType, activityData, activit
       const equipmentType = activityData.equipment_type; // 'Fixed' or 'Portable'
       const unitCapacityLb = parseFloat(activityData.unit_capacity_lb) || 0;
       
-      // Get GWP
-      let gwp = null;
-      try {
-        const gwpData = await emissionFactorResolver.getRefrigerantGWP(suppressantType, 'GHG_PROTOCOL');
-        gwp = gwpData.gwp;
-      } catch (error) {
-        console.warn('[AutoCalculate] Fire Suppression GWP lookup failed, using fallback:', error.message);
-        gwp = getSuppressantGWP(suppressantType);
-      }
+      const gwp = await getGWP(suppressantType);
       
       // Leak rates per Excel
       const leakRate = equipmentType === 'Fixed' ? 0.035 : 0.025; // 3.5% for Fixed, 2.5% for Portable
@@ -468,6 +463,44 @@ export async function autoCalculateEmissions(activityType, activityData, activit
         leakRate: leakRate,
         emissions_kg: emissionsKg,
         method: 'SCREENING_METHOD',
+        scope: 'scope_1'
+      };
+    }
+    // SCOPE 1: Fire Suppression (Generic/Legacy)
+    else if (activityType === 'fire_suppression') {
+      const suppressantType = activityData.suppressant_type;
+      const gwp = await getGWP(suppressantType);
+      const amount = parseFloat(activityData.amount_used) || 0;
+      const unit = activityData.amount_units || 'kg';
+      
+      const multiplier = unit === 'lb' ? 0.453592 : 1;
+      const emissionsKg = amount * multiplier * gwp;
+      const co2e_mt = emissionsKg / 1000;
+
+      calculationResult = {
+        co2_kg: 0, ch4_g: 0, n2o_g: 0, total_co2e_mt: co2e_mt,
+        suppressantType, gwp,
+        amount_used: amount, amount_units: unit,
+        method: 'DEFAULT',
+        scope: 'scope_1'
+      };
+    }
+    // SCOPE 1: Refrigeration & AC (Generic/Legacy)
+    else if (activityType === 'refrigeration_ac') {
+      const refrigerantType = activityData.refrigerant_type;
+      const gwp = await getGWP(refrigerantType);
+      const amount = parseFloat(activityData.amount_released) || 0;
+      const unit = activityData.amount_units || 'kg';
+      
+      const multiplier = unit === 'lb' ? 0.453592 : 1;
+      const emissionsKg = amount * multiplier * gwp;
+      const co2e_mt = emissionsKg / 1000;
+
+      calculationResult = {
+        co2_kg: 0, ch4_g: 0, n2o_g: 0, total_co2e_mt: co2e_mt,
+        refrigerantType, gwp,
+        amount_released: amount, amount_units: unit,
+        method: 'DEFAULT',
         scope: 'scope_1'
       };
     }
@@ -1058,8 +1091,7 @@ export async function createActivity(req, res, next) {
     for (const [key, value] of Object.entries(activityData)) {
       // Skip reporting_period_id and entered_by as they're already included in base fields
       if (key === 'reporting_period_id' || key === 'entered_by') continue;
-      // Remove equipment_type for fire_suppression (not in DB schema)
-      if (normalizedActivityType === 'fire_suppression' && key === 'equipment_type') continue;
+      // Standard INSERT fields logic
       fields.push(key);
       // Convert empty strings to null to prevent "invalid input syntax for type numeric" errors
       const sanitizedValue = value === '' ? null : value;

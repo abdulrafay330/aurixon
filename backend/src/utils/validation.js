@@ -71,27 +71,27 @@ const ACTIVITY_TYPES = {
   },
   business_travel_personal_car: {
     name: 'Business Travel - Personal Vehicle',
-    required: ['source_id', 'vehicle_type', 'miles_traveled'],
+    required: ['vehicle_type', 'miles_traveled'],
     scope: 3,
   },
   business_travel_rail_bus: {
     name: 'Business Travel - Rail or Bus',
-    required: ['source_id', 'vehicle_type', 'miles_traveled'],
+    required: ['vehicle_type', 'miles_traveled'],
     scope: 3,
   },
   business_travel_air: {
     name: 'Business Travel - Air',
-    required: ['source_id', 'vehicle_type', 'miles_traveled'],
+    required: ['vehicle_type', 'miles_traveled'],
     scope: 3,
   },
   employee_commuting_personal_car: {
     name: 'Employee Commuting - Personal Vehicle',
-    required: ['source_id', 'vehicle_type', 'miles_traveled'],
+    required: ['vehicle_type', 'miles_traveled'],
     scope: 3,
   },
   employee_commuting_public_transport: {
     name: 'Employee Commuting - Public Transport',
-    required: ['source_id', 'vehicle_type', 'miles_traveled'],
+    required: ['vehicle_type', 'miles_traveled'],
     scope: 3,
   },
   business_travel_hotel: {
@@ -121,7 +121,7 @@ const ACTIVITY_TYPES = {
   },
   waste: {
     name: 'Waste Generated in Operations',
-    required: ['waste_type', 'disposal_method', 'amount'],
+    required: ['waste_type', 'disposal_method', 'amount', 'units'],
     scope: 3,
   },
   offsets: {
@@ -146,15 +146,23 @@ const DROPDOWNS = {
     'Petroleum Coke (Liquid)'
   ],
   vehicle_types: [
+    // On-Road Gasoline
     'Passenger Cars - Gasoline', 'Light-Duty Trucks - Gasoline', 'Heavy-Duty Vehicles - Gasoline', 'Motorcycles - Gasoline',
-    'Passenger Cars - Diesel', 'Light-Duty Trucks - Diesel', 'Medium- and Heavy-Duty Vehicles - Diesel',
-    'Light-Duty Cars - Methanol', 'Light-Duty Cars - Ethanol', 'Light-Duty Cars - CNG', 'Light-Duty Cars - LPG', 'Light-Duty Cars - Biodiesel',
+    // On-Road Diesel
+    'Passenger Cars - Diesel', 'Light-Duty Trucks - Diesel', 'Heavy-Duty Vehicles - Diesel', 'Medium- and Heavy-Duty Vehicles - Diesel',
+    // On-Road Alternative Fuels
+    'Passenger Cars - CNG', 'Passenger Cars - LPG', 'Passenger Cars - LNG', 'Passenger Cars - Biodiesel', 'Passenger Cars - Ethanol', 'Passenger Cars - Methanol',
     'Light-Duty Trucks - Ethanol', 'Light-Duty Trucks - CNG', 'Light-Duty Trucks - LPG', 'Light-Duty Trucks - LNG', 'Light-Duty Trucks - Biodiesel',
+    'Light-Duty Cars - Methanol', 'Light-Duty Cars - Ethanol', 'Light-Duty Cars - CNG', 'Light-Duty Cars - LPG', 'Light-Duty Cars - Biodiesel',
     'Medium-Duty Trucks - CNG', 'Medium-Duty Trucks - LPG', 'Medium-Duty Trucks - LNG', 'Medium-Duty Trucks - Biodiesel',
     'Heavy-Duty Trucks - Methanol', 'Heavy-Duty Trucks - Ethanol', 'Heavy-Duty Trucks - CNG', 'Heavy-Duty Trucks - LPG', 'Heavy-Duty Trucks - LNG', 'Heavy-Duty Trucks - Biodiesel',
-    'Buses - Methanol', 'Buses - Ethanol', 'Buses - CNG', 'Buses - LPG', 'Buses - LNG', 'Buses - Biodiesel',
+    'Heavy-Duty Vehicles - CNG', 'Heavy-Duty Vehicles - LPG', 'Heavy-Duty Vehicles - LNG', 'Heavy-Duty Vehicles - Biodiesel', 'Heavy-Duty Vehicles - Ethanol', 'Heavy-Duty Vehicles - Methanol',
+    // Buses
+    'Buses - Gasoline', 'Buses - Diesel', 'Buses - CNG', 'Buses - LPG', 'Buses - LNG', 'Buses - Biodiesel', 'Buses - Ethanol', 'Buses - Methanol',
+    // Non-Road
     'Ships and Boats - Residual Fuel Oil', 'Ships and Boats - Gasoline (2 stroke)', 'Ships and Boats - Gasoline (4 stroke)', 'Ships and Boats - Diesel',
     'Locomotives - Diesel', 'Aircraft - Jet Fuel', 'Aircraft - Aviation Gasoline',
+    // Equipment
     'Agricultural Equipment - Gasoline (2 stroke)', 'Agricultural Equipment - Gasoline (4 stroke)', 'Agricultural Equipment - Gasoline Off-Road Trucks',
     'Agricultural Equipment - Diesel Equipment', 'Agricultural Equipment - Diesel Off-Road Trucks', 'Agricultural Equipment - LPG',
     'Construction/Mining Equipment - Gasoline (2 stroke)', 'Construction/Mining Equipment - Gasoline (4 stroke)', 'Construction/Mining Equipment - Gasoline Off-Road Trucks',
@@ -229,13 +237,13 @@ const DROPDOWNS = {
     'Anaerobically Digested (Wet  Digestate with Curing)'
   ],
   units: [
-    'kg', 'tonnes', 'metric ton', 'short ton',
+    'kg', 'tonnes', 'metric ton', 'short ton', 'ton',
     'litres', 'liter', 'gallons', 'gallon', 'gal',
     'barrel', 'cubic meters',
     'kWh', 'MWh', 'MMBtu', 'scf', 'Mcf',
     'thousand cubic feet', 'therms', 'Therm', 'GJ',
     'km', 'miles',
-    'kg CO2e', 'tonnes CO2e', 'lbs', 'pounds'
+    'kg CO2e', 'tonnes CO2e', 'lb', 'lbs', 'pounds'
   ],
   // Scope 3 Specific (Matches Excel)
   scope3_road: ['Passenger Car', 'Light-Duty Truck', 'Motorcycle'],

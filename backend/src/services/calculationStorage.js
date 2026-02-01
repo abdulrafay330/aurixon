@@ -161,6 +161,7 @@ async function updateReportingPeriodSummary(companyId, reportingPeriodId) {
                              getVal('refrigeration_ac_screening');
     const s1_fire = getVal('fire_suppression') +
                     getVal('fire_suppression_material_balance') +
+                    getVal('fire_suppression_simplified_material_balance') + 
                     getVal('fire_suppression_screening_method');
     const s1_gases = getVal('purchased_gases'); 
     const s1_total = s1_stationary + s1_mobile + s1_refrigeration + s1_fire + s1_gases;

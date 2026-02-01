@@ -338,7 +338,12 @@ export async function generatePDFReport(periodId, options = {}) {
     doc.fillColor(COLORS.text).fontSize(10).font('Helvetica-Bold').text(text.scope1, 60, currentY);
     // Don't have exact Scope 1 sum here easily without summing `emissions` array, but traffic light service has it? 
     // We'll calculate it from `emissions` array for accuracy.
-    const s1ActivityTypes = ['stationary_combustion','mobile_sources','refrigeration_ac','fire_suppression','purchased_gases'];
+    const s1ActivityTypes = [
+      'stationary_combustion', 'mobile_sources', 
+      'refrigeration_ac', 'refrigeration_ac_material_balance', 'refrigeration_ac_simplified_material_balance', 'refrigeration_ac_screening_method', 
+      'fire_suppression', 'fire_suppression_material_balance', 'fire_suppression_simplified_material_balance', 'fire_suppression_screening_method', 
+      'purchased_gases'
+    ];
     const s1Total = emissions.filter(e => s1ActivityTypes.includes(e.activity_type))
                              .reduce((sum, e) => sum + parseFloat(e.total_emissions), 0);
     doc.font('Helvetica').text(s1Total.toFixed(3), 400, currentY, { align: 'right', width: 100 });
@@ -579,7 +584,12 @@ export async function generatePDFReport(periodId, options = {}) {
           scope1: { 
             title: 'SCOPE 1 — DIRECT EMISSIONS',
             subtitle: 'Emissions from owned or controlled sources',
-            types: ['stationary_combustion', 'mobile_sources', 'refrigeration_ac', 'fire_suppression', 'purchased_gases'],
+            types: [
+              'stationary_combustion', 'mobile_sources', 
+              'refrigeration_ac', 'refrigeration_ac_material_balance', 'refrigeration_ac_simplified_material_balance', 'refrigeration_ac_screening_method', 
+              'fire_suppression', 'fire_suppression_material_balance', 'fire_suppression_simplified_material_balance', 'fire_suppression_screening_method', 
+              'purchased_gases'
+            ],
             entries: [],
             color: '#10b981'
           },
