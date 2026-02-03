@@ -310,7 +310,7 @@ export async function inviteUser(req, res) {
     console.error('[UserController] Error inviting user:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to invite user'
+      error: 'Unable to send invitation. Please try again.'
     });
   }
 }
@@ -403,7 +403,7 @@ export async function addUser(req, res) {
     console.error('[UserController] Error adding user:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to add user'
+      error: 'Unable to create user account. Please try again.'
     });
   }
 }

@@ -65,6 +65,7 @@ export async function getCompanyKPIs(companyId, periodId = null) {
        CASE 
          WHEN ec.activity_type IN ('stationary_combustion', 'mobile_sources', 'refrigeration_ac', 'refrigeration_ac_material_balance', 'refrigeration_ac_simplified_material_balance', 'refrigeration_ac_screening_method', 'fire_suppression', 'fire_suppression_material_balance', 'fire_suppression_simplified_material_balance', 'fire_suppression_screening_method', 'purchased_gases') THEN 'Scope 1'
          WHEN ec.activity_type IN ('electricity', 'steam') THEN 'Scope 2'
+         WHEN ec.activity_type = 'offsets' THEN 'Offsets'
          ELSE 'Scope 3'
        END as scope,
        SUM(
@@ -195,6 +196,7 @@ export async function getCompanyKPIs(companyId, periodId = null) {
     traffic_light_scope1: calculateTrafficLight(scope1, industryBaselines.scope1),
     traffic_light_scope2: calculateTrafficLight(scope2, industryBaselines.scope2),
     traffic_light_scope3: calculateTrafficLight(scope3, industryBaselines.scope3),
+    offsets: scopeBreakdown['Offsets'] || 0,
     recommendations,
     completionStatus: {
       dataEntry: completionPercent,

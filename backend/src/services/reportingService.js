@@ -128,6 +128,7 @@ async function getScopeBreakdown(reportingPeriodId) {
             'purchased_gases'
           ) THEN 'scope_1'
           WHEN activity_type::text IN ('electricity', 'steam') THEN 'scope_2'
+          WHEN activity_type::text = 'offsets' THEN 'offsets'
           ELSE 'scope_3'
         END as scope,
         activity_type,

@@ -31,7 +31,7 @@ export async function registerUser(req, res, next) {
     );
 
     if (existingUser) {
-      return res.status(409).json({ error: 'Email already registered' });
+      return res.status(409).json({ error: 'User already registered' });
     }
 
     // Hash password
@@ -99,13 +99,13 @@ export async function loginUser(req, res, next) {
     );
 
     if (!user) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Email or password is incorrect' });
     }
 
     // Verify password
     const isPasswordValid = await verifyPassword(password, user.password_hash);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Invalid credentials' });
+      return res.status(401).json({ error: 'Email or password is incorrect' });
     }
 
     // Update last login timestamp
@@ -183,7 +183,7 @@ export async function signupCompany(req, res, next) {
     );
 
     if (existingUser) {
-      return res.status(409).json({ error: 'Email already registered' });
+      return res.status(409).json({ error: 'User already registered' });
     }
 
     // Hash password

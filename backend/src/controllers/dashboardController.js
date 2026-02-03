@@ -46,7 +46,7 @@ export async function getKPIs(req, res) {
     console.error('[DashboardController] Error getting KPIs:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to get KPIs'
+      error: 'Unable to retrieve KPIs. Please try again.'
     });
   }
 }
@@ -75,7 +75,7 @@ export async function getEmissionsIntensity(req, res) {
     console.error('[DashboardController] Error getting emissions intensity:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to calculate emissions intensity'
+      error: 'Unable to calculate emissions intensity. Please try again.'
     });
   }
 }
@@ -101,7 +101,7 @@ export async function getAlerts(req, res) {
     console.error('[DashboardController] Error generating alerts:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to generate alerts'
+      error: 'Unable to generate alerts. Please try again.'
     });
   }
 }
@@ -137,7 +137,7 @@ export async function getBenchmark(req, res) {
     console.error('[DashboardController] Error getting benchmark:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to get benchmark comparison'
+      error: 'Unable to retrieve benchmark comparison. Please try again.'
     });
   }
 }
@@ -162,7 +162,7 @@ export async function getTargetProgress(req, res) {
     console.error('[DashboardController] Error getting target progress:', error);
     res.status(500).json({
       success: false,
-      error: error.message || 'Failed to get target progress'
+      error: 'Unable to retrieve target progress. Please try again.'
     });
   }
 }

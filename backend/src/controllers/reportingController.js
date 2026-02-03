@@ -28,7 +28,7 @@ async function getEmissionsTrends(req, res) {
     res.json({ success: true, trends });
   } catch (error) {
     console.error('[ReportingController] Error in getEmissionsTrends:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Unable to generate emissions trends report. Please try again.' });
   }
 }
 
@@ -87,7 +87,7 @@ async function getScopeBreakdown(req, res) {
     res.json({ success: true, breakdown });
   } catch (error) {
     console.error('[ReportingController] Error in getScopeBreakdown:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Unable to generate scope breakdown report. Please try again.' });
   }
 }
 
@@ -104,7 +104,7 @@ async function comparePeriods(req, res) {
     res.json({ success: true, comparison });
   } catch (error) {
     console.error('[ReportingController] Error in comparePeriods:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Unable to compare periods. Please try again.' });
   }
 }
 
@@ -129,7 +129,7 @@ async function getEmissionIntensity(req, res) {
     res.json({ success: true, intensity });
   } catch (error) {
     console.error('[ReportingController] Error in getEmissionIntensity:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Unable to calculate emission intensity. Please try again.' });
   }
 }
 
@@ -151,7 +151,7 @@ async function getGoalProgress(req, res) {
     res.json({ success: true, progress });
   } catch (error) {
     console.error('[ReportingController] Error in getGoalProgress:', error);
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({ success: false, error: 'Unable to retrieve goal progress. Please try again.' });
   }
 }
 

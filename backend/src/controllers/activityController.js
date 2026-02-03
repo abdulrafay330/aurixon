@@ -1047,12 +1047,17 @@ export async function createActivity(req, res, next) {
         }
       }
     }
+    
+    // For electricity, default calculation_method if missing
+    if (normalizedActivityType === 'electricity' && !activityData.calculation_method) {
+      activityData.calculation_method = 'LOCATION_BASED';
+    }
 
     // Field filtering for Scope 2 (Electricity & Steam) and Purchased Gases
     if (['purchased_gases', 'electricity', 'steam'].includes(normalizedActivityType)) {
       const allowedFields = {
         purchased_gases: ['gas_type', 'amount_purchased', 'amount_units', 'external_id'],
-        electricity: ['source_id', 'source_description', 'facility_location', 'source_area_sqft', 'kwh_purchased', 'market_based_co2_factor', 'market_based_ch4_factor', 'market_based_n2o_factor', 'external_id'],
+        electricity: ['source_id', 'source_description', 'facility_location', 'source_area_sqft', 'kwh_purchased', 'market_based_co2_factor', 'market_based_ch4_factor', 'market_based_n2o_factor', 'external_id', 'calculation_method'],
         steam: ['source_id', 'source_description', 'source_area_sqft', 'fuel_type', 'boiler_efficiency', 'amount_purchased', 'amount_units', 'location_based_co2_factor', 'location_based_ch4_factor', 'location_based_n2o_factor', 'market_based_co2_factor', 'market_based_ch4_factor', 'market_based_n2o_factor', 'external_id']
       };
 

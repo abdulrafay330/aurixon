@@ -13,7 +13,7 @@ export async function getSelfProfile(req, res) {
     if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to retrieve profile. Please try again.' });
   }
 }
 
@@ -34,7 +34,7 @@ export async function updateSelfProfile(req, res) {
     const result = await pool.query(query, params);
     res.json(result.rows[0]);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to update profile. Please try again.' });
   }
 }
 
@@ -48,7 +48,7 @@ export async function getSelfCompanyUsers(req, res) {
     );
     res.json(result.rows);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to retrieve company users. Please try again.' });
   }
 }
 
@@ -86,7 +86,7 @@ export async function registerUserInSelfCompany(req, res) {
 
     res.json({ success: true, user: newUser.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to create user account. Please try again.' });
   }
 }
 
@@ -113,7 +113,7 @@ export async function updateUserInSelfCompany(req, res) {
     }
     res.json({ success: true, user: updatedUser.rows[0] });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to update user information. Please try again.' });
   }
 }
 
@@ -126,7 +126,7 @@ export async function updateUserRoleInSelfCompany(req, res) {
     await pool.query('UPDATE user_company_roles SET role = $1 WHERE user_id = $2 AND company_id = $3', [role, userId, companyId]);
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to update user role. Please try again.' });
   }
 }
 
@@ -138,6 +138,6 @@ export async function removeUserFromSelfCompany(req, res) {
     await pool.query('DELETE FROM user_company_roles WHERE user_id = $1 AND company_id = $2', [userId, companyId]);
     res.json({ success: true });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Unable to remove user. Please try again.' });
   }
 }

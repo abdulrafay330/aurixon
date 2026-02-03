@@ -16,30 +16,35 @@ import * as paymentService from '../services/paymentService.js';
 export async function createCheckoutSession(req, res) {
   try {
     const { reportingPeriodId, metadata } = req.body;
-    const companyId = req.user.company_id;
-
-    if (!reportingPeriodId) {
-      return res.status(400).json({
-        success: false,
-        error: 'Reporting period ID is required'
-      });
-    }
-
     // Verify user has access to this reporting period
     const { rows } = await req.db.query(
-      'SELECT id FROM reporting_periods WHERE id = $1 AND company_id = $2',
-      [reportingPeriodId, companyId]
+      'SELECT id, company_id FROM reporting_periods WHERE id = $1',
+      [reportingPeriodId]
     );
 
     if (rows.length === 0) {
-      return res.status(404).json({
+       return res.status(404).json({
+         success: false,
+         error: 'Reporting period not found'
+       });
+    }
+    
+    const reportingPeriod = rows[0];
+    const rpCompanyId = reportingPeriod.company_id;
+
+    const hasAccess = req.user.roles && req.user.roles.some(r => 
+      r.company_id === rpCompanyId || r.companyId === rpCompanyId || r.role === 'internal_admin'
+    );
+
+    if (!hasAccess) {
+      return res.status(403).json({
         success: false,
-        error: 'Reporting period not found or access denied'
+        error: 'Access denied'
       });
     }
 
     const result = await paymentService.createCheckoutSession(
-      companyId,
+      rpCompanyId,
       reportingPeriodId,
       metadata
     );
@@ -95,18 +100,30 @@ export async function handleWebhook(req, res) {
 export async function verifyPayment(req, res) {
   try {
     const { reportingPeriodId } = req.params;
-    const companyId = req.user.company_id;
-
     // Verify user has access to this reporting period
     const { rows } = await req.db.query(
-      'SELECT id FROM reporting_periods WHERE id = $1 AND company_id = $2',
-      [reportingPeriodId, companyId]
+      'SELECT id, company_id FROM reporting_periods WHERE id = $1',
+      [reportingPeriodId]
     );
 
     if (rows.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'Reporting period not found or access denied'
+        error: 'Reporting period not found'
+      });
+    }
+
+    const reportingPeriod = rows[0];
+    const rpCompanyId = reportingPeriod.company_id;
+
+    const hasAccess = req.user.roles && req.user.roles.some(r => 
+      r.company_id === rpCompanyId || r.companyId === rpCompanyId || r.role === 'internal_admin'
+    );
+
+    if (!hasAccess) {
+      return res.status(403).json({
+         success: false,
+         error: 'Access denied'
       });
     }
 

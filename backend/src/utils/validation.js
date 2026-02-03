@@ -61,12 +61,12 @@ const ACTIVITY_TYPES = {
   },
   electricity: {
     name: 'Electricity',
-    required: ['kwh_purchased', 'source_id'],
+    required: ['kwh_purchased'],
     scope: 2,
   },
   steam: {
     name: 'Steam & Heat',
-    required: ['amount_purchased', 'source_id', 'fuel_type'],
+    required: ['amount_purchased', 'fuel_type'],
     scope: 2,
   },
   business_travel_personal_car: {

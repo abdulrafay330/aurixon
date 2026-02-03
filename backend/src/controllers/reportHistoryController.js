@@ -24,7 +24,11 @@ export async function getReportHistory(req, res) {
     const { companyId } = req.params;
     
     // Verify user has access to this company
-    if (req.user.company_id !== companyId) {
+    const hasAccess = req.user.roles && req.user.roles.some(r => 
+      r.company_id === companyId || r.companyId === companyId || r.role === 'internal_admin'
+    );
+
+    if (!hasAccess) {
       return res.status(403).json({
         success: false,
         error: 'Access denied'
@@ -105,7 +109,11 @@ export async function getReportById(req, res) {
 
     const report = reportQuery.rows[0];
 
-    if (report.company_id !== companyId) {
+    const hasAccess = req.user.roles && req.user.roles.some(r => 
+      r.company_id === report.company_id || r.companyId === report.company_id || r.role === 'internal_admin'
+    );
+
+    if (!hasAccess) {
       return res.status(403).json({
         success: false,
         error: 'Access denied'

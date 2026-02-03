@@ -70,7 +70,7 @@ export async function saveCompanyBoundaryAnswers(req, res, next) {
         );
 
         if (question?.is_required && !answer_boolean) {
-          throw new Error(`Question ${question_id} is required and cannot be disabled`);
+          return res.status(400).json({ error: `Question ${question_id} is required and cannot be disabled` });
         }
 
         // Upsert answer to company_boundary_answers
@@ -430,7 +430,7 @@ export async function submitBoundaryAnswers(req, res, next) {
         const { boundary_question_id, answer: answerValue } = answer;
 
         if (boundary_question_id === undefined || answerValue === undefined) {
-          throw new Error('Invalid answer format: missing boundary_question_id or answer');
+          return res.status(400).json({ error: 'Invalid answer format: missing boundary_question_id or answer' });
         }
 
         // Upsert (insert or update)
