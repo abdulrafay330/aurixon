@@ -6,6 +6,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
@@ -116,6 +118,25 @@ app.use('/api/csrd', csrdRoutes);
 app.use('/api/reports/history', reportHistoryRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/reviews', reviewRoutes);
+
+// Define __dirname for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Serve static files from the React frontend app
+const frontendPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendPath));
+
+// SPA catch-all route (after API routes, before error handlers)
+// This ensures that any non-API request returns the React app
+app.get('*', (req, res, next) => {
+  // If it's an API request that wasn't matched, verify we don't return HTML
+  // (Though usually API paths start with /api, so this check is extra safety)
+  if (req.path.startsWith('/api')) {
+    return next();
+  }
+  res.sendFile(path.join(frontendPath, 'index.html'));
+});
 
 // ========================================================================
 // ERROR HANDLING
