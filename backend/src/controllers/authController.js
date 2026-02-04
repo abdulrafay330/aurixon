@@ -99,13 +99,13 @@ export async function loginUser(req, res, next) {
     );
 
     if (!user) {
-      return res.status(401).json({ error: 'Email or password is incorrect' });
+      return res.status(401).json({ error: 'Email or password incorrect' });
     }
 
     // Verify password
     const isPasswordValid = await verifyPassword(password, user.password_hash);
     if (!isPasswordValid) {
-      return res.status(401).json({ error: 'Email or password is incorrect' });
+      return res.status(401).json({ error: 'Email or password incorrect' });
     }
 
     // Update last login timestamp

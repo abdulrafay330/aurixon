@@ -62,9 +62,17 @@ export const AuthProvider = ({ children }) => {
       return { success: true, data: transformedUser };
     } catch (error) {
       console.error('Login failed:', error);
+      
+      let errorMessage = 'Login failed. Please try again.';
+      if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+      
       return {
         success: false,
-        error: error.response?.data?.message || 'Login failed',
+        error: errorMessage,
       };
     }
   };
