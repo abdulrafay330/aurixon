@@ -726,10 +726,10 @@ const AddActivityPage = () => {
       
       if (isEditMode) {
         await activitiesAPI.updateActivity(user.companyId, normalizedActivityType, activityId, payload);
-        success(t('activities.updateSuccess'));
+        success(t('activities.updateSuccess', 'Activity updated successfully'));
       } else {
         await activitiesAPI.createActivity(user.companyId, activityType, payload);
-        success(t('activities.createSuccess'));
+        success(t('activities.createSuccess', 'Activity created successfully'));
       }
       if (activePeriodId) {
         // Redirect back to the specific activity type list
@@ -773,19 +773,19 @@ const AddActivityPage = () => {
     // Special handling for mobile_sources vehicle_type dropdown
     if (field.name === 'vehicle_type' && normalizedActivityType === 'mobile_sources') {
       return (
-        <select
-          name={field.name}
-          value={formData[field.name] || ''}
-          onChange={handleChange}
-          required={field.required}
-          className="w-full px-4 py-2 bg-midnight-navy border border-carbon-gray rounded-lg text-off-white focus:outline-none focus:border-cyan-mist"
-          disabled={isVehicleTypeDisabled}
-        >
-          <option value="">Select Vehicle Type</option>
-          {getVehicleTypeOptions().map(opt => (
-            <option key={opt} value={opt}>{opt}</option>
-          ))}
-        </select>
+          <select
+            name={field.name}
+            value={formData[field.name] || ''}
+            onChange={handleChange}
+            required={field.required}
+            className="w-full px-4 py-2 bg-midnight-navy border border-carbon-gray rounded-lg text-off-white focus:outline-none focus:border-cyan-mist"
+            disabled={isVehicleTypeDisabled}
+          >
+            <option value="">{t('common.selectOption', 'Select Option')}</option>
+            {getVehicleTypeOptions().map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
       );
     }
     // End special handling
@@ -916,7 +916,7 @@ const AddActivityPage = () => {
            <button
               onClick={handleReturn}
               className="p-3 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 hover:border-cyan-mist transition-all group"
-              title="Back"
+              title={t('common.back', 'Back')}
            >
               <ArrowLeftIcon className="h-6 w-6 text-cyan-mist group-hover:scale-110 transition-transform" />
            </button>
@@ -924,7 +924,7 @@ const AddActivityPage = () => {
              <div className="flex items-center gap-2 mb-1">
                 <SparklesIcon className="h-4 w-4 text-cyan-mist opacity-60" />
                 <span className="text-[10px] uppercase font-black tracking-[0.2em] text-cyan-mist opacity-80">
-                  {isEditMode ? 'Record Amendment' : 'New Environmental Entry'}
+                  {isEditMode ? t('activities.recordAmendment', 'Record Amendment') : t('activities.newEnvironmentalEntry', 'New Environmental Entry')}
                 </span>
              </div>
              <h1 className="text-4xl font-bold tracking-tight">
@@ -940,12 +940,12 @@ const AddActivityPage = () => {
              <div className="bg-white/5 border border-white/10 rounded-[2rem] p-8 shadow-xl">
                 <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-6 flex items-center gap-3">
                    <div className="w-6 h-px bg-gray-600"></div>
-                   Reporting Context
+                   {t('activities.reportingContext', 'Reporting Context')}
                 </h3>
                 <div className="grid grid-cols-1 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-300 mb-3 ml-1">
-                      Target Audit Period
+                      {t('activities.targetAuditPeriod', 'Target Audit Period')}
                     </label>
                     {loadingPeriods ? (
                       <div className="h-14 w-full bg-white/5 animate-pulse rounded-2xl"></div>
@@ -957,7 +957,7 @@ const AddActivityPage = () => {
                         </div>
                         <div className="flex-1">
                           <p className="text-white font-medium">
-                            {reportingPeriods.find(p => p.id === activePeriodId)?.period_label || 'Selected Period'}
+                            {reportingPeriods.find(p => p.id === activePeriodId)?.period_label || t('activities.selectedPeriod', 'Selected Period')}
                           </p>
                           <p className="text-xs text-stone-gray">
                             {(() => {
@@ -969,12 +969,12 @@ const AddActivityPage = () => {
                             })()}
                           </p>
                         </div>
-                        <span className="text-[10px] text-stone-gray uppercase tracking-wider">Auto-assigned</span>
+                        <span className="text-[10px] text-stone-gray uppercase tracking-wider">{t('activities.autoAssigned', 'Auto-assigned')}</span>
                       </div>
                     ) : (
                       // Error state - no period context
                       <div className="w-full px-5 py-4 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-sm">
-                        ⚠️ No reporting period specified. Please navigate from Active Reports to add activities.
+                        ⚠️ {t('activities.noReportingPeriodError', 'No reporting period specified. Please navigate from Active Reports to add activities.')}
                       </div>
                     )}
                   </div>
@@ -988,14 +988,14 @@ const AddActivityPage = () => {
              
              <h3 className="text-xs font-black text-gray-400 uppercase tracking-[0.2em] mb-10 flex items-center gap-3">
                 <div className="w-6 h-px bg-gray-600"></div>
-                Primary Metric Data
+                {t('activities.primaryMetricData', 'Primary Metric Data')}
              </h3>
 
              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
                {formFields.map(field => (
                  <div key={field.name} className={field.type === 'textarea' ? 'md:col-span-2' : ''}>
                    <label className="block text-sm font-bold text-gray-300 mb-3 ml-1">
-                     {field.label} {field.required && <span className="text-cyan-mist">*</span>}
+                     {t(`activities.fields.${field.name}`, field.label)} {field.required && <span className="text-cyan-mist">*</span>}
                    </label>
                    <div className="relative group">
                      {renderField({

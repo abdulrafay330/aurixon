@@ -26,33 +26,33 @@ import {
 
 const ACTIVITY_METADATA = {
   // Scope 1
-  stationary_combustion: { label: 'Stationary Combustion', scope: 1, description: 'On-site fuel combustion (boilers, furnaces)', icon: Flame },
-  mobile_sources: { label: 'Mobile Sources', scope: 1, description: 'Owned or leased vehicles', icon: Car },
-  refrigeration_ac_material_balance: { label: 'Refrigeration & AC', scope: 1, description: 'Fugitive emissions from cooling systems', icon: Snowflake },
-  refrigeration_ac_simplified_material_balance: { label: 'Refrigeration & AC (Simplified)', scope: 1, description: 'Fugitive emissions', icon: Snowflake },
-  refrigeration_ac_screening_method: { label: 'Refrigeration & AC (Screening)', scope: 1, description: 'Fugitive emissions', icon: Snowflake },
-  fire_suppression_material_balance: { label: 'Fire Suppression', scope: 1, description: 'Emissions from fire suppressants', icon: Flame },
-  fire_suppression_simplified_material_balance: { label: 'Fire Suppression (Simplified)', scope: 1, description: 'Fire suppressants', icon: Flame },
-  fire_suppression_screening_method: { label: 'Fire Suppression (Screening)', scope: 1, description: 'Fire suppressants', icon: Flame },
-  purchased_gases: { label: 'Purchased Gases', scope: 1, description: 'Industrial gases used in processes', icon: Zap },
+  stationary_combustion: { scope: 1, icon: Flame },
+  mobile_sources: { scope: 1, icon: Car },
+  refrigeration_ac_material_balance: { scope: 1, icon: Snowflake },
+  refrigeration_ac_simplified_material_balance: { scope: 1, icon: Snowflake },
+  refrigeration_ac_screening_method: { scope: 1, icon: Snowflake },
+  fire_suppression_material_balance: { scope: 1, icon: Flame },
+  fire_suppression_simplified_material_balance: { scope: 1, icon: Flame },
+  fire_suppression_screening_method: { scope: 1, icon: Flame },
+  purchased_gases: { scope: 1, icon: Zap },
 
   // Scope 2
-  electricity: { label: 'Purchased Electricity', scope: 2, description: 'Purchased electricity for own use', icon: Zap },
-  steam: { label: 'Purchased Steam', scope: 2, description: 'Purchased steam, heat, or cooling', icon: Flame },
+  electricity: { scope: 2, icon: Zap },
+  steam: { scope: 2, icon: Flame },
 
   // Scope 3
-  business_travel_personal_car: { label: 'Business Travel (Car)', scope: 3, description: 'Employee-owned vehicle travel', icon: Car },
-  business_travel_rail_bus: { label: 'Business Travel (Rail/Bus)', scope: 3, description: 'Public transit business travel', icon: Train },
-  business_travel_air: { label: 'Business Travel (Air)', scope: 3, description: 'Air travel for business', icon: Plane },
-  business_travel_hotel: { label: 'Hotel Stays', scope: 3, description: 'Business hotel accommodations', icon: Building },
-  employee_commuting_personal_car: { label: 'Employee Commuting (Car)', scope: 3, description: 'Commuting in personal vehicles', icon: Car },
-  employee_commuting_public_transport: { label: 'Employee Commuting (Public)', scope: 3, description: 'Commuting via public transit', icon: Train },
-  upstream_trans_dist_vehicle_miles: { label: 'Upstream Trans & Dist', scope: 3, description: 'Transportation of purchased goods', icon: Truck },
-  upstream_trans_dist_ton_miles: { label: 'Upstream Trans & Dist (Ton-Miles)', scope: 3, description: 'Large scale transportation', icon: Truck },
-  waste: { label: 'Waste Generated', scope: 3, description: 'Disposal and treatment of waste', icon: Trash2 },
+  business_travel_personal_car: { scope: 3, icon: Car },
+  business_travel_rail_bus: { scope: 3, icon: Train },
+  business_travel_air: { scope: 3, icon: Plane },
+  business_travel_hotel: { scope: 3, icon: Building },
+  employee_commuting_personal_car: { scope: 3, icon: Car },
+  employee_commuting_public_transport: { scope: 3, icon: Train },
+  upstream_trans_dist_vehicle_miles: { scope: 3, icon: Truck },
+  upstream_trans_dist_ton_miles: { scope: 3, icon: Truck },
+  waste: { scope: 3, icon: Trash2 },
 
   // Offsets
-  offsets: { label: 'Carbon Offsets', scope: 'Other', description: 'Verified emission reductions', icon: Leaf },
+  offsets: { scope: 'Other', icon: Leaf },
 };
 
 const SCOPE_COLORS = {
@@ -99,38 +99,10 @@ const ActivitiesChecklistPage = () => {
       }
     } catch (err) {
       console.error(err);
-      error(t('activities.fetchError', 'Failed to load activities'));
+      error(t('checklist.fetchError', 'Failed to load activities'));
     } finally {
       setLoading(false);
     }
-  };
-
-  const getCountForType = (type) => {
-    const mapping = {
-      'stationary_combustion': 'stationary_combustion',
-      'mobile_sources': 'mobile_sources',
-      'refrigeration_ac_material_balance': 'refrigeration_ac',
-      'refrigeration_ac_simplified_material_balance': 'refrigeration_ac',
-      'refrigeration_ac_screening_method': 'refrigeration_ac',
-      'fire_suppression_material_balance': 'fire_suppression',
-      'fire_suppression_simplified_material_balance': 'fire_suppression',
-      'fire_suppression_screening_method': 'fire_suppression',
-      'purchased_gases': 'purchased_gases',
-      'electricity': 'electricity',
-      'steam': 'steam',
-      'business_travel_personal_car': 'business_travel_road',
-      'business_travel_rail_bus': 'business_travel_rail',
-      'business_travel_air': 'business_travel_air',
-      'business_travel_hotel': 'business_travel_hotel',
-      'employee_commuting_personal_car': 'commuting',
-      'employee_commuting_public_transport': 'commuting',
-      'upstream_trans_dist_vehicle_miles': 'transportation_distribution',
-      'upstream_trans_dist_ton_miles': 'transportation_distribution',
-      'waste': 'waste',
-      'offsets': 'offsets'
-    };
-    const key = mapping[type] || type;
-    return activitiesCount[key] || 0;
   };
 
   const groupByType = (types) => {
@@ -149,7 +121,12 @@ const ActivitiesChecklistPage = () => {
                        meta.scope === 2 ? 'Scope 2' :
                        meta.scope === 3 ? 'Scope 3' : 'Other';
 
-      groups[scopeKey].push({ id: type, ...meta });
+      groups[scopeKey].push({ 
+        id: type, 
+        ...meta,
+        label: t(`activityMetadata.${type}.label`),
+        description: t(`activityMetadata.${type}.description`)
+      });
     });
 
     return groups;
@@ -163,7 +140,7 @@ const ActivitiesChecklistPage = () => {
             <div className="absolute inset-0 rounded-full border-4 border-cyan-mist/20"></div>
             <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-cyan-mist animate-spin"></div>
           </div>
-          <p className="text-gray-400">Loading activities...</p>
+          <p className="text-gray-400">{t('common.loading', 'Loading...')}</p>
         </div>
       </div>
     );
@@ -180,7 +157,7 @@ const ActivitiesChecklistPage = () => {
           className="text-gray-400 hover:text-white flex items-center gap-2 transition-colors text-sm"
         >
           <ChevronRight className="w-4 h-4 rotate-180" />
-          Back to Active Reports
+          {t('checklist.backToReports', 'Back to Active Reports')}
         </button>
       </div>
 
@@ -188,10 +165,10 @@ const ActivitiesChecklistPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10 bg-white/5 backdrop-blur-sm p-6 rounded-2xl border border-white/10">
         <div>
           <h1 className="text-2xl font-bold text-white mb-2">
-            {periodInfo?.period_label || 'Report'} Activities
+            {periodInfo?.period_label || t('common.report', 'Report')} {t('checklist.activities', 'Activities')}
           </h1>
           <p className="text-gray-400">
-            Configure data for each enabled emission source below.
+            {t('checklist.configureSources', 'Configure data for each enabled emission source below.')}
           </p>
         </div>
         <div className="flex gap-3">
@@ -202,14 +179,14 @@ const ActivitiesChecklistPage = () => {
                 className="flex items-center gap-2 px-4 py-2.5 bg-white/5 border border-white/10 rounded-xl text-gray-300 hover:bg-white/10 hover:text-white transition-all"
               >
                 <Pencil className="h-4 w-4" />
-                <span className="hidden sm:inline">Edit Questions</span>
+                <span className="hidden sm:inline">{t('checklist.editQuestions', 'Edit Questions')}</span>
               </Link>
               <Link
                 to={`/reports/generate?periodId=${periodId}`}
                 className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-cyan-mist to-growth-green text-midnight-navy font-semibold rounded-xl hover:shadow-lg hover:shadow-growth-green/20 transition-all"
               >
                 <FileBarChart className="h-5 w-5" />
-                <span className="hidden sm:inline">Generate Report</span>
+                <span className="hidden sm:inline">{t('checklist.generateReport', 'Generate Report')}</span>
               </Link>
             </>
           )}
@@ -226,7 +203,7 @@ const ActivitiesChecklistPage = () => {
                   {scope}
                 </h2>
                 <div className={`flex-grow h-px bg-gradient-to-r ${SCOPE_COLORS[scope]?.gradient || 'from-cyan-mist'} opacity-30`}></div>
-                <span className="text-sm text-gray-500">{activities.length} sources</span>
+                <span className="text-sm text-gray-500">{activities.length} {t('checklist.sources', 'sources')}</span>
               </div>
 
               <div className="grid gap-3">
@@ -269,15 +246,15 @@ const ActivitiesChecklistPage = () => {
           <div className="w-20 h-20 bg-amber-500/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
             <AlertCircle className="h-10 w-10 text-amber-400" />
           </div>
-          <h3 className="text-xl font-bold text-white mb-2">No activities enabled</h3>
+          <h3 className="text-xl font-bold text-white mb-2">{t('checklist.noActivitiesEnabled', 'No activities enabled')}</h3>
           <p className="text-gray-400 mb-6 max-w-md mx-auto">
-            You need to answer the boundary questions to enable emission sources for tracking.
+            {t('checklist.noActivitiesDesc', 'You need to answer the boundary questions to enable emission sources for tracking.')}
           </p>
           <Link
             to={`/settings/boundary/${periodId}`}
             className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-cyan-mist to-growth-green text-midnight-navy font-semibold rounded-xl hover:shadow-lg hover:shadow-growth-green/20 transition-all"
           >
-            Go to Boundary Questions
+            {t('checklist.goToQuestions', 'Go to Boundary Questions')}
             <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
@@ -286,16 +263,16 @@ const ActivitiesChecklistPage = () => {
       {/* Footer CTA */}
       {enabledTypes.length > 0 && (
         <div className="mt-16 p-8 bg-gradient-to-br from-white/5 to-white/[0.02] border border-cyan-mist/20 rounded-2xl text-center">
-          <h3 className="text-2xl font-bold text-white mb-3">Ready to generate your report?</h3>
+          <h3 className="text-2xl font-bold text-white mb-3">{t('checklist.readyTitle', 'Ready to generate your report?')}</h3>
           <p className="text-gray-400 mb-6 max-w-xl mx-auto">
-            Review your entries and see your total carbon footprint before generating the final compliance report.
+            {t('checklist.readyDesc', 'Review your entries and see your total carbon footprint before generating the final compliance report.')}
           </p>
           <Link
             to={`/reports/generate?periodId=${periodId}`}
             className="inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-cyan-mist to-growth-green text-midnight-navy font-bold rounded-xl hover:shadow-lg hover:shadow-growth-green/30 transition-all"
           >
             <FileBarChart className="w-5 h-5" />
-            Generate Report
+            {t('checklist.generateReport', 'Generate Report')}
           </Link>
         </div>
       )}

@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react';
 
 const LoginPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { login } = useAuth();
   const [formData, setFormData] = useState({
@@ -36,7 +39,7 @@ const LoginPage = () => {
         setError(result.error);
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
+      setError(t('auth.unexpectedError', 'An unexpected error occurred. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -44,6 +47,11 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-midnight-navy flex">
+      {/* Language Switcher Overlay */}
+      <div className="absolute top-6 right-6 z-50">
+        <LanguageSwitcher />
+      </div>
+
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-midnight-navy via-primary-light to-midnight-navy" />
@@ -56,20 +64,20 @@ const LoginPage = () => {
           </Link>
 
           <h1 className="text-4xl font-bold text-white mb-4">
-            Welcome to Your
+            {t('auth.welcomeTitle', 'Welcome to Your')}{' '}
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-mist to-growth-green">
-              ESG Command Center
+              {t('auth.esgCommandCenter', 'ESG Command Center')}
             </span>
           </h1>
 
           <p className="text-gray-400 text-lg mb-8 max-w-md">
-            Track, measure, and reduce your carbon footprint with precision. CSRD compliance made simple.
+            {t('auth.welcomeSubtitle', 'Track, measure, and reduce your carbon footprint with precision. CSRD compliance made simple.')}
           </p>
 
           <div className="space-y-4">
-            <FeatureItem text="Automated emission calculations" />
-            <FeatureItem text="CSRD-compliant reporting" />
-            <FeatureItem text="Real-time sustainability insights" />
+            <FeatureItem text={t('auth.automatedCalcs', 'Automated emission calculations')} />
+            <FeatureItem text={t('auth.csrdReporting', 'CSRD-compliant reporting')} />
+            <FeatureItem text={t('auth.realtimeInsights', 'Real-time sustainability insights')} />
           </div>
         </div>
       </div>
@@ -85,11 +93,11 @@ const LoginPage = () => {
           </div>
 
           <div className="text-center lg:text-left mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Sign in to your account</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">{t('auth.signInTitle', 'Sign in to your account')}</h2>
             <p className="text-gray-400">
-              Don't have an account?{' '}
+              {t('auth.noAccount', "Don't have an account?")}{' '}
               <Link to="/register" className="text-cyan-mist hover:text-growth-green transition-colors font-medium">
-                Get started
+                {t('auth.register', 'Get started')}
               </Link>
             </p>
           </div>
@@ -103,7 +111,7 @@ const LoginPage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Email Address
+                {t('auth.email', 'Email Address')}
               </label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
@@ -121,7 +129,7 @@ const LoginPage = () => {
 
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-2">
-                Password
+                {t('auth.password', 'Password')}
               </label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
@@ -131,7 +139,7 @@ const LoginPage = () => {
                   value={formData.password}
                   onChange={handleChange}
                   required
-                  placeholder="Enter your password"
+                  placeholder={t('auth.password', 'Password')}
                   className="w-full pl-12 pr-12 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-mist/50 focus:ring-1 focus:ring-cyan-mist/50 transition-all"
                 />
                 <button
@@ -150,13 +158,13 @@ const LoginPage = () => {
                   type="checkbox"
                   className="w-4 h-4 rounded border-gray-600 bg-white/5 text-growth-green focus:ring-growth-green/50"
                 />
-                <span className="text-sm text-gray-400">Remember me</span>
+                <span className="text-sm text-gray-400">{t('auth.rememberMe', 'Remember me')}</span>
               </label>
               <Link
                 to="/forgot-password"
                 className="text-sm text-cyan-mist hover:text-growth-green transition-colors"
               >
-                Forgot password?
+                {t('auth.forgotPassword', 'Forgot password?')}
               </Link>
             </div>
 
@@ -166,10 +174,10 @@ const LoginPage = () => {
               className="w-full py-3.5 bg-gradient-to-r from-cyan-mist to-growth-green text-midnight-navy font-semibold rounded-xl hover:shadow-lg hover:shadow-growth-green/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (
-                <span>Signing in...</span>
+                <span>{t('auth.signingIn', 'Signing in...')}</span>
               ) : (
                 <>
-                  <span>Sign In</span>
+                  <span>{t('auth.signIn', 'Sign In')}</span>
                   <ArrowRight className="w-5 h-5" />
                 </>
               )}
@@ -178,7 +186,7 @@ const LoginPage = () => {
 
           <div className="mt-8 text-center">
             <Link to="/" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
-              ← Back to Home
+              ← {t('auth.backToHome', 'Back to Home')}
             </Link>
           </div>
         </div>

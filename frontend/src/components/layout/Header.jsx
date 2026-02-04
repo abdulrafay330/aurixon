@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 import LanguageSwitcher from '../common/LanguageSwitcher';
 import { Menu, LogOut, ChevronDown } from 'lucide-react';
 
 const Header = ({ onMenuClick, showMenuButton }) => {
+  const { t } = useTranslation();
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -22,7 +24,7 @@ const Header = ({ onMenuClick, showMenuButton }) => {
               <button
                 onClick={onMenuClick}
                 className="lg:hidden p-2 text-gray-400 hover:text-white transition-colors rounded-lg hover:bg-white/10"
-                aria-label="Toggle menu"
+                aria-label={t('nav.toggleMenu', 'Toggle menu')}
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -61,7 +63,7 @@ const Header = ({ onMenuClick, showMenuButton }) => {
                 <button
                   onClick={handleLogout}
                   className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all"
-                  title="Logout"
+                  title={t('auth.logout', 'Logout')}
                 >
                   <LogOut className="w-5 h-5" />
                 </button>
@@ -79,13 +81,13 @@ const Header = ({ onMenuClick, showMenuButton }) => {
                 to="/login"
                 className="text-sm font-medium text-gray-300 hover:text-white transition-colors"
               >
-                Login
+                {t('auth.login', 'Login')}
               </Link>
               <Link
                 to="/register"
                 className="px-5 py-2 bg-gradient-to-r from-cyan-mist to-growth-green text-midnight-navy text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-growth-green/20 transition-all"
               >
-                Get Started
+                {t('auth.register', 'Get Started')}
               </Link>
             </div>
           )}

@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
+import LanguageSwitcher from '../../components/common/LanguageSwitcher';
 import { Mail, Lock, User, Building2, ArrowRight, Eye, EyeOff, Globe } from 'lucide-react';
 
 const RegisterPage = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { register } = useAuth();
   const [formData, setFormData] = useState({
@@ -30,11 +33,11 @@ const RegisterPage = () => {
 
   const validateStep1 = () => {
     if (!formData.companyName.trim()) {
-      setError('Company name is required');
+      setError(t('validation.required', 'This field is required'));
       return false;
     }
     if (!formData.firstName.trim() || !formData.lastName.trim()) {
-      setError('First name and last name are required');
+      setError(t('validation.required', 'This field is required'));
       return false;
     }
     return true;
@@ -42,15 +45,15 @@ const RegisterPage = () => {
 
   const validateStep2 = () => {
     if (!formData.email.trim() || !formData.email.includes('@')) {
-      setError('Valid email is required');
+      setError(t('validation.invalidEmail', 'Invalid email address'));
       return false;
     }
     if (formData.password.length < 8) {
-      setError('Password must be at least 8 characters');
+      setError(t('validation.minLength', 'Minimum {{count}} characters required', { count: 8 }));
       return false;
     }
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+      setError(t('validation.passwordMismatch', 'Passwords do not match'));
       return false;
     }
     return true;
@@ -87,7 +90,7 @@ const RegisterPage = () => {
         setError(result.error);
       }
     } catch (err) {
-      setError('Registration failed. Please try again.');
+      setError(t('auth.regFailed', 'Registration failed. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -95,6 +98,11 @@ const RegisterPage = () => {
 
   return (
     <div className="min-h-screen bg-midnight-navy flex">
+      {/* Language Switcher Overlay */}
+      <div className="absolute top-6 right-6 z-50">
+        <LanguageSwitcher />
+      </div>
+
       {/* Left Panel - Branding */}
       <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-midnight-navy via-primary-light to-midnight-navy" />
@@ -107,21 +115,21 @@ const RegisterPage = () => {
           </Link>
 
           <h1 className="text-4xl font-bold text-white mb-4">
-            Start Your Journey to
+            {t('auth.startJourney', 'Start Your Journey to')}
             <span className="block text-transparent bg-clip-text bg-gradient-to-r from-cyan-mist to-growth-green">
-              Carbon Neutrality
+              {t('auth.carbonNeutrality', 'Carbon Neutrality')}
             </span>
           </h1>
 
           <p className="text-gray-400 text-lg mb-8 max-w-md">
-            Join hundreds of European SMEs using Aurixon to automate their ESG reporting and achieve CSRD compliance.
+            {t('auth.joinSMEs', 'Join hundreds of European SMEs using Aurixon to automate their ESG reporting and achieve CSRD compliance.')}
           </p>
 
           {/* Progress Steps */}
           <div className="flex items-center gap-4 mb-8">
-            <StepIndicator number={1} active={step >= 1} completed={step > 1} label="Company Info" />
+            <StepIndicator number={1} active={step >= 1} completed={step > 1} label={t('auth.companyInfo', 'Company Info')} />
             <div className={`flex-1 h-0.5 ${step > 1 ? 'bg-growth-green' : 'bg-white/10'}`} />
-            <StepIndicator number={2} active={step >= 2} completed={step > 2} label="Account Setup" />
+            <StepIndicator number={2} active={step >= 2} completed={step > 2} label={t('auth.accountSetup', 'Account Setup')} />
           </div>
         </div>
       </div>
@@ -137,20 +145,20 @@ const RegisterPage = () => {
           </div>
 
           <div className="text-center lg:text-left mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Create your account</h2>
+            <h2 className="text-2xl font-bold text-white mb-2">{t('auth.register', 'Create your account')}</h2>
             <p className="text-gray-400">
-              Already have an account?{' '}
+              {t('auth.haveAccount', 'Already have an account?')}{' '}
               <Link to="/login" className="text-cyan-mist hover:text-growth-green transition-colors font-medium">
-                Sign in
+                {t('auth.signIn', 'Sign in')}
               </Link>
             </p>
           </div>
 
           {/* Mobile Progress */}
           <div className="lg:hidden flex items-center gap-4 mb-6">
-            <StepIndicator number={1} active={step >= 1} completed={step > 1} label="Info" small />
+            <StepIndicator number={1} active={step >= 1} completed={step > 1} label={t('auth.companyInfo', 'Info')} small />
             <div className={`flex-1 h-0.5 ${step > 1 ? 'bg-growth-green' : 'bg-white/10'}`} />
-            <StepIndicator number={2} active={step >= 2} completed={step > 2} label="Account" small />
+            <StepIndicator number={2} active={step >= 2} completed={step > 2} label={t('auth.accountSetup', 'Account')} small />
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">
@@ -164,7 +172,7 @@ const RegisterPage = () => {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Company Name
+                    {t('auth.companyName', 'Company Name')}
                   </label>
                   <div className="relative">
                     <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
@@ -174,7 +182,7 @@ const RegisterPage = () => {
                       value={formData.companyName}
                       onChange={handleChange}
                       required
-                      placeholder="Your company name"
+                      placeholder={t('auth.companyName', 'Your company name')}
                       className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-mist/50 focus:ring-1 focus:ring-cyan-mist/50 transition-all"
                     />
                   </div>
@@ -183,7 +191,7 @@ const RegisterPage = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      First Name
+                      {t('auth.firstName', 'First Name')}
                     </label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
@@ -200,7 +208,7 @@ const RegisterPage = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Last Name
+                      {t('auth.lastName', 'Last Name')}
                     </label>
                     <input
                       type="text"
@@ -216,7 +224,7 @@ const RegisterPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Preferred Language
+                    {t('auth.preferredLanguage', 'Preferred Language')}
                   </label>
                   <div className="relative">
                     <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
@@ -237,7 +245,7 @@ const RegisterPage = () => {
                   onClick={handleNext}
                   className="w-full py-3.5 bg-gradient-to-r from-cyan-mist to-growth-green text-midnight-navy font-semibold rounded-xl hover:shadow-lg hover:shadow-growth-green/20 transition-all flex items-center justify-center gap-2"
                 >
-                  <span>Continue</span>
+                  <span>{t('auth.continue', 'Continue')}</span>
                   <ArrowRight className="w-5 h-5" />
                 </button>
               </>
@@ -247,7 +255,7 @@ const RegisterPage = () => {
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Work Email
+                    {t('auth.email', 'Work Email')}
                   </label>
                   <div className="relative">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
@@ -265,7 +273,7 @@ const RegisterPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Password
+                    {t('auth.password', 'Password')}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
@@ -275,7 +283,7 @@ const RegisterPage = () => {
                       value={formData.password}
                       onChange={handleChange}
                       required
-                      placeholder="Min. 8 characters"
+                      placeholder={t('validation.minLength', 'Min. 8 characters', { count: 8 })}
                       className="w-full pl-12 pr-12 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-mist/50 focus:ring-1 focus:ring-cyan-mist/50 transition-all"
                     />
                     <button
@@ -290,7 +298,7 @@ const RegisterPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Confirm Password
+                    {t('auth.confirmPassword', 'Confirm Password')}
                   </label>
                   <div className="relative">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
@@ -300,7 +308,7 @@ const RegisterPage = () => {
                       value={formData.confirmPassword}
                       onChange={handleChange}
                       required
-                      placeholder="Re-enter your password"
+                      placeholder={t('auth.confirmPassword', 'Re-enter your password')}
                       className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-cyan-mist/50 focus:ring-1 focus:ring-cyan-mist/50 transition-all"
                     />
                   </div>
@@ -312,7 +320,7 @@ const RegisterPage = () => {
                     onClick={() => setStep(1)}
                     className="px-6 py-3.5 bg-white/5 border border-white/10 text-white font-medium rounded-xl hover:bg-white/10 transition-all"
                   >
-                    Back
+                    {t('auth.back', 'Back')}
                   </button>
                   <button
                     type="submit"
@@ -320,10 +328,10 @@ const RegisterPage = () => {
                     className="flex-1 py-3.5 bg-gradient-to-r from-cyan-mist to-growth-green text-midnight-navy font-semibold rounded-xl hover:shadow-lg hover:shadow-growth-green/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {loading ? (
-                      <span>Creating account...</span>
+                      <span>{t('auth.creatingAccount', 'Creating account...')}</span>
                     ) : (
                       <>
-                        <span>Create Account</span>
+                        <span>{t('auth.createAccount', 'Create Account')}</span>
                         <ArrowRight className="w-5 h-5" />
                       </>
                     )}
@@ -335,7 +343,7 @@ const RegisterPage = () => {
 
           <div className="mt-8 text-center">
             <Link to="/" className="text-sm text-gray-500 hover:text-gray-300 transition-colors">
-              ← Back to Home
+              ← {t('auth.backToHome', 'Back to Home')}
             </Link>
           </div>
         </div>

@@ -311,19 +311,19 @@ const ActivitiesListPage = () => {
       { key: 'refrigerant_type', header: t('activities.refrigerantType', 'Gas'), accessor: (row) => row.refrigerant_type || '-' },
       // Conditional columns based on subtype
       ...(selectedType === 'refrigeration_ac_material_balance' ? [
-        { key: 'inventory_change', header: 'Inventory Change (kg)', accessor: (row) => row.inventory_change || '-' },
-        { key: 'transferred_amount', header: 'Transferred (kg)', accessor: (row) => row.transferred_amount || '-' },
-        { key: 'capacity_change', header: 'Capacity Change (kg)', accessor: (row) => row.capacity_change || '-' },
+        { key: 'inventory_change', header: t('activities.inventoryChange', 'Inventory Change (kg)'), accessor: (row) => row.inventory_change || '-' },
+        { key: 'transferred_amount', header: t('activities.transferred', 'Transferred (kg)'), accessor: (row) => row.transferred_amount || '-' },
+        { key: 'capacity_change', header: t('activities.capacityChange', 'Capacity Change (kg)'), accessor: (row) => row.capacity_change || '-' },
       ] : []),
       ...(selectedType === 'refrigeration_ac_simplified_material_balance' ? [
-        { key: 'new_units_charge', header: 'New Charge (kg)', accessor: (row) => row.new_units_charge || '-' },
-        { key: 'new_units_capacity', header: 'New Capacity (kg)', accessor: (row) => row.new_units_capacity || '-' },
-        { key: 'existing_units_recharge', header: 'Recharge (kg)', accessor: (row) => row.existing_units_recharge || '-' },
+        { key: 'new_units_charge', header: t('activities.newCharge', 'New Charge (kg)'), accessor: (row) => row.new_units_charge || '-' },
+        { key: 'new_units_capacity', header: t('activities.newCapacity', 'New Capacity (kg)'), accessor: (row) => row.new_units_capacity || '-' },
+        { key: 'existing_units_recharge', header: t('activities.recharge', 'Recharge (kg)'), accessor: (row) => row.existing_units_recharge || '-' },
       ] : []),
       ...(selectedType === 'refrigeration_ac_screening_method' ? [
-        { key: 'equipment_type', header: 'Equipment Type', accessor: (row) => row.equipment_type || '-' },
-        { key: 'new_units_charge', header: 'New Charge (kg)', accessor: (row) => row.new_units_charge || '-' },
-        { key: 'operating_units_capacity', header: 'Op. Capacity (kg)', accessor: (row) => row.operating_units_capacity || '-' },
+        { key: 'equipment_type', header: t('activities.equipmentType', 'Equipment Type'), accessor: (row) => row.equipment_type || '-' },
+        { key: 'new_units_charge', header: t('activities.newCharge', 'New Charge (kg)'), accessor: (row) => row.new_units_charge || '-' },
+        { key: 'operating_units_capacity', header: t('activities.opCapacity', 'Op. Capacity (kg)'), accessor: (row) => row.operating_units_capacity || '-' },
       ] : []),
       {
         key: 'emissions',
@@ -371,19 +371,19 @@ const ActivitiesListPage = () => {
       { key: 'suppressant_type', header: t('activities.suppressantType', 'Gas'), accessor: (row) => row.suppressant_type || '-' },
       // Conditional columns based on subtype
       ...(selectedType === 'fire_suppression_material_balance' ? [
-        { key: 'inventory_change_lb', header: 'Inventory Change (lb)', accessor: (row) => row.inventory_change_lb || '-' },
-        { key: 'transferred_amount_lb', header: 'Transferred (lb)', accessor: (row) => row.transferred_amount_lb || '-' },
-        { key: 'capacity_change_lb', header: 'Capacity Change (lb)', accessor: (row) => row.capacity_change_lb || '-' },
+        { key: 'inventory_change_lb', header: t('activities.inventoryChange', 'Inventory Change (lb)'), accessor: (row) => row.inventory_change_lb || '-' },
+        { key: 'transferred_amount_lb', header: t('activities.transferred', 'Transferred (lb)'), accessor: (row) => row.transferred_amount_lb || '-' },
+        { key: 'capacity_change_lb', header: t('activities.capacityChange', 'Capacity Change (lb)'), accessor: (row) => row.capacity_change_lb || '-' },
       ] : []),
       ...(selectedType === 'fire_suppression_simplified_material_balance' ? [
-        { key: 'new_units_charge_lb', header: 'New Charge (lb)', accessor: (row) => row.new_units_charge_lb || '-' },
-        { key: 'existing_units_recharge_lb', header: 'Recharge (lb)', accessor: (row) => row.existing_units_recharge_lb || '-' },
-        { key: 'disposed_units_capacity_lb', header: 'Disposed Cap. (lb)', accessor: (row) => row.disposed_units_capacity_lb || '-' },
-        { key: 'disposed_units_recovered_lb', header: 'Recovered (lb)', accessor: (row) => row.disposed_units_recovered_lb || '-' },
+        { key: 'new_units_charge_lb', header: t('activities.newCharge', 'New Charge (lb)'), accessor: (row) => row.new_units_charge_lb || '-' },
+        { key: 'existing_units_recharge_lb', header: t('activities.recharge', 'Recharge (lb)'), accessor: (row) => row.existing_units_recharge_lb || '-' },
+        { key: 'disposed_units_capacity_lb', header: t('activities.disposedCap', 'Disposed Cap. (lb)'), accessor: (row) => row.disposed_units_capacity_lb || '-' },
+        { key: 'disposed_units_recovered_lb', header: t('activities.recovered', 'Recovered (lb)'), accessor: (row) => row.disposed_units_recovered_lb || '-' },
       ] : []),
       ...(selectedType === 'fire_suppression_screening_method' ? [
-        { key: 'equipment_type', header: 'Equipment Type', accessor: (row) => row.equipment_type || '-' },
-        { key: 'unit_capacity_lb', header: 'Capacity (lb)', accessor: (row) => row.unit_capacity_lb || '-' },
+        { key: 'equipment_type', header: t('activities.equipmentType', 'Equipment Type'), accessor: (row) => row.equipment_type || '-' },
+        { key: 'unit_capacity_lb', header: t('activities.capacity', 'Capacity (lb)'), accessor: (row) => row.unit_capacity_lb || '-' },
       ] : []),
       {
         key: 'emissions',
@@ -431,7 +431,7 @@ const ActivitiesListPage = () => {
       { key: 'gas_type', header: t('activities.gasType', 'Gas Type'), accessor: (row) => row.gas_type || '-' },
       { 
         key: 'amount_purchased', 
-        header: 'Purchased Amount (lb)', 
+        header: t('activities.purchasedAmount', 'Purchased Amount (lb)'), 
         accessor: (row) => {
           const amount = parseFloat(row.amount_purchased);
           return !isNaN(amount) ? `${amount.toFixed(2)} lb` : '-';
@@ -479,10 +479,10 @@ const ActivitiesListPage = () => {
   } else if (selectedType === 'business_travel_hotel') {
     columns = [
       { key: 'reporting_period', header: t('activities.reportingPeriod', 'Reporting Period'), accessor: (row) => row.reporting_period_label || row.reporting_period || '-' },
-      { key: 'hotel_name', header: 'Hotel Name', accessor: (row) => row.hotel_name || '-' },
-      { key: 'hotel_category', header: 'Category', accessor: (row) => row.hotel_category || '-' },
-      { key: 'num_nights', header: 'Nights', accessor: (row) => row.num_nights || '-' },
-      { key: 'num_rooms', header: 'Rooms', accessor: (row) => row.num_rooms || '-' },
+      { key: 'hotel_name', header: t('activities.hotelName', 'Hotel Name'), accessor: (row) => row.hotel_name || '-' },
+      { key: 'hotel_category', header: t('activities.hotelCategory', 'Category'), accessor: (row) => row.hotel_category || '-' },
+      { key: 'num_nights', header: t('activities.nights', 'Nights'), accessor: (row) => row.num_nights || '-' },
+      { key: 'num_rooms', header: t('activities.rooms', 'Rooms'), accessor: (row) => row.num_rooms || '-' },
       {
         key: 'emissions',
         header: t('activities.emissions', 'Emissions (MT CO₂e)'),
@@ -510,12 +510,12 @@ const ActivitiesListPage = () => {
       { key: 'source_description', header: t('activities.sourceDescription', 'Source Description'), accessor: (row) => row.source_description || '-' },
       { 
         key: 'vehicle_type', 
-        header: selectedType === 'business_travel_air' ? 'Flight Length' : 'Vehicle Type', 
+        header: selectedType === 'business_travel_air' ? t('activities.flightLength', 'Flight Length') : t('activities.vehicleType', 'Vehicle Type'), 
         accessor: (row) => row.vehicle_type || '-' 
       },
       { 
         key: 'miles_traveled', 
-        header: 'Distance (miles)', 
+        header: t('activities.distanceMiles', 'Distance (miles)'), 
         accessor: (row) => row.miles_traveled || '-' 
       },
       {
@@ -541,9 +541,9 @@ const ActivitiesListPage = () => {
   } else if (selectedType === 'commuting') {
     columns = [
       { key: 'reporting_period', header: t('activities.reportingPeriod', 'Reporting Period'), accessor: (row) => row.reporting_period_label || row.reporting_period || '-' },
-      { key: 'commute_mode', header: 'Commute Mode', accessor: (row) => row.commute_mode || '-' },
-      { key: 'num_commuters', header: 'Commuters', accessor: (row) => row.num_commuters || '-' },
-      { key: 'distance_per_trip_km', header: 'Distance/Trip (km)', accessor: (row) => row.distance_per_trip_km || '-' },
+      { key: 'commute_mode', header: t('activities.commuteMode', 'Commute Mode'), accessor: (row) => row.commute_mode || '-' },
+      { key: 'num_commuters', header: t('activities.commuters', 'Commuters'), accessor: (row) => row.num_commuters || '-' },
+      { key: 'distance_per_trip_km', header: t('activities.distanceTrip', 'Distance/Trip (km)'), accessor: (row) => row.distance_per_trip_km || '-' },
       {
         key: 'emissions',
         header: t('activities.emissions', 'Emissions (MT CO₂e)'),
@@ -569,9 +569,9 @@ const ActivitiesListPage = () => {
       { key: 'reporting_period', header: t('activities.reportingPeriod', 'Reporting Period'), accessor: (row) => row.reporting_period_label || row.reporting_period || '-' },
       { key: 'source_id', header: t('activities.sourceId', 'Source ID'), accessor: (row) => row.source_id || '-' },
       { key: 'source_description', header: t('activities.sourceDescription', 'Source Description'), accessor: (row) => row.source_description || '-' },
-      { key: 'waste_type', header: 'Waste Type', accessor: (row) => row.waste_type || '-' },
-      { key: 'disposal_method', header: 'Disposal Method', accessor: (row) => row.disposal_method || '-' },
-      { key: 'amount', header: 'Amount', accessor: (row) => `${row.amount || 0} ${row.units || 'kg'}` },
+      { key: 'waste_type', header: t('activities.wasteType', 'Waste Type'), accessor: (row) => row.waste_type || '-' },
+      { key: 'disposal_method', header: t('activities.disposalMethod', 'Disposal Method'), accessor: (row) => row.disposal_method || '-' },
+      { key: 'amount', header: t('activities.amount', 'Amount'), accessor: (row) => `${row.amount || 0} ${row.units || 'kg'}` },
       {
         key: 'emissions',
         header: t('activities.emissions', 'Emissions (MT CO₂e)'),
@@ -595,10 +595,10 @@ const ActivitiesListPage = () => {
   } else if (selectedType === 'transportation_distribution') {
     columns = [
       { key: 'reporting_period', header: t('activities.reportingPeriod', 'Reporting Period'), accessor: (row) => row.reporting_period_label || row.reporting_period || '-' },
-      { key: 'shipment_description', header: 'Shipment', accessor: (row) => row.shipment_description || '-' },
-      { key: 'transport_mode', header: 'Mode', accessor: (row) => row.transport_mode || '-' },
-      { key: 'distance_km', header: 'Distance (km)', accessor: (row) => row.distance_km || '-' },
-      { key: 'weight_tons', header: 'Weight (tons)', accessor: (row) => row.weight_tons || '-' },
+      { key: 'shipment_description', header: t('activities.shipment', 'Shipment'), accessor: (row) => row.shipment_description || '-' },
+      { key: 'transport_mode', header: t('activities.mode', 'Mode'), accessor: (row) => row.transport_mode || '-' },
+      { key: 'distance_km', header: t('activities.distanceKm', 'Distance (km)'), accessor: (row) => row.distance_km || '-' },
+      { key: 'weight_tons', header: t('activities.weightTons', 'Weight (tons)'), accessor: (row) => row.weight_tons || '-' },
       {
         key: 'emissions',
         header: t('activities.emissions', 'Emissions (MT CO₂e)'),
@@ -624,8 +624,8 @@ const ActivitiesListPage = () => {
       { key: 'reporting_period', header: t('activities.reportingPeriod', 'Reporting Period'), accessor: (row) => row.reporting_period_label || row.reporting_period || '-' },
       { key: 'source_id', header: t('activities.sourceId', 'Source ID'), accessor: (row) => row.source_id || '-' },
       { key: 'source_description', header: t('activities.sourceDescription', 'Source Description'), accessor: (row) => row.source_description || '-' },
-      { key: 'vehicle_type', header: 'Vehicle Type', accessor: (row) => row.vehicle_type || '-' },
-      { key: 'vehicle_miles', header: 'Vehicle-Miles', accessor: (row) => row.vehicle_miles || '-' },
+      { key: 'vehicle_type', header: t('activities.vehicleType', 'Vehicle Type'), accessor: (row) => row.vehicle_type || '-' },
+      { key: 'vehicle_miles', header: t('activities.vehicleMiles', 'Vehicle-Miles'), accessor: (row) => row.vehicle_miles || '-' },
       {
         key: 'emissions',
         header: t('activities.emissions', 'Emissions (MT CO₂e)'),
@@ -651,8 +651,8 @@ const ActivitiesListPage = () => {
       { key: 'reporting_period', header: t('activities.reportingPeriod', 'Reporting Period'), accessor: (row) => row.reporting_period_label || row.reporting_period || '-' },
       { key: 'source_id', header: t('activities.sourceId', 'Source ID'), accessor: (row) => row.source_id || '-' },
       { key: 'source_description', header: t('activities.sourceDescription', 'Source Description'), accessor: (row) => row.source_description || '-' },
-      { key: 'vehicle_type', header: 'Vehicle Type', accessor: (row) => row.vehicle_type || '-' },
-      { key: 'short_ton_miles', header: 'Short Ton-Miles', accessor: (row) => row.short_ton_miles || '-' },
+      { key: 'vehicle_type', header: t('activities.vehicleType', 'Vehicle Type'), accessor: (row) => row.vehicle_type || '-' },
+      { key: 'short_ton_miles', header: t('activities.tonMiles', 'Short Ton-Miles'), accessor: (row) => row.short_ton_miles || '-' },
       {
         key: 'emissions',
         header: t('activities.emissions', 'Emissions (MT CO₂e)'),
@@ -676,10 +676,10 @@ const ActivitiesListPage = () => {
   } else if (selectedType === 'offsets') {
     columns = [
       { key: 'reporting_period', header: t('activities.reportingPeriod', 'Reporting Period'), accessor: (row) => row.reporting_period_label || row.reporting_period || '-' },
-      { key: 'source_id', header: 'ID', accessor: (row) => row.source_id || '-' },
-      { key: 'offset_description', header: 'Project Description', accessor: (row) => row.offset_description || '-' },
-      { key: 'scope_category', header: 'Scope/Category', accessor: (row) => row.scope_category || '-' },
-      { key: 'amount_mtco2e', header: 'Offsets Purchased (MT CO₂e)', accessor: (row) => row.amount_mtco2e || '0' },
+      { key: 'source_id', header: t('activities.projectId', 'ID'), accessor: (row) => row.source_id || '-' },
+      { key: 'offset_description', header: t('activities.projectDescription', 'Project Description'), accessor: (row) => row.offset_description || '-' },
+      { key: 'scope_category', header: t('activities.scopeCategory', 'Scope/Category'), accessor: (row) => row.scope_category || '-' },
+      { key: 'amount_mtco2e', header: t('activities.offsetsPurchased', 'Offsets Purchased (MT CO₂e)'), accessor: (row) => row.amount_mtco2e || '0' },
       {
         key: 'actions',
         header: t('common.actions'),
@@ -697,16 +697,16 @@ const ActivitiesListPage = () => {
       { key: 'reporting_period', header: t('activities.reportingPeriod', 'Reporting Period'), accessor: (row) => row.reporting_period_label || row.reporting_period || '-' },
       { key: 'source_id', header: t('activities.sourceId', 'Source ID'), accessor: (row) => row.source_id || '-' },
       { key: 'source_description', header: t('activities.sourceDescription', 'Source Description'), accessor: (row) => row.source_description || '-' },
-      { key: 'facility_location', header: 'eGRID Subregion', accessor: (row) => row.facility_location || '-' },
-      { key: 'kwh_purchased', header: 'kWh Purchased', accessor: (row) => row.kwh_purchased || '0' },
+      { key: 'facility_location', header: t('activities.egridSubregion', 'eGRID Subregion'), accessor: (row) => row.facility_location || '-' },
+      { key: 'kwh_purchased', header: t('activities.kwhPurchased', 'kWh Purchased'), accessor: (row) => row.kwh_purchased || '0' },
       {
         key: 'loc_emissions',
-        header: 'Location-Based (MT CO₂e)',
+        header: t('activities.locationBased', 'Location-Based (MT CO₂e)'),
         accessor: (row) => row.location_based_co2e_mt ? `${parseFloat(row.location_based_co2e_mt).toFixed(4)}` : '-'
       },
       {
         key: 'mkt_emissions',
-        header: 'Market-Based (MT CO₂e)',
+        header: t('activities.marketBased', 'Market-Based (MT CO₂e)'),
         accessor: (row) => row.market_based_co2e_mt ? `${parseFloat(row.market_based_co2e_mt).toFixed(4)}` : '-'
       },
       {
@@ -726,17 +726,17 @@ const ActivitiesListPage = () => {
       { key: 'reporting_period', header: t('activities.reportingPeriod', 'Reporting Period'), accessor: (row) => row.reporting_period_label || row.reporting_period || '-' },
       { key: 'source_id', header: t('activities.sourceId', 'Source ID'), accessor: (row) => row.source_id || '-' },
       { key: 'source_description', header: t('activities.sourceDescription', 'Source Description'), accessor: (row) => row.source_description || '-' },
-      { key: 'fuel_type', header: 'Fuel Type', accessor: (row) => row.fuel_type || '-' },
-      { key: 'boiler_efficiency', header: 'Efficiency (%)', accessor: (row) => row.boiler_efficiency || '80' },
-      { key: 'amount_purchased', header: 'Purchased (MMBtu)', accessor: (row) => row.amount_purchased || '0' },
+      { key: 'fuel_type', header: t('activities.fuelType', 'Fuel Type'), accessor: (row) => row.fuel_type || '-' },
+      { key: 'boiler_efficiency', header: t('activities.efficiency', 'Efficiency (%)'), accessor: (row) => row.boiler_efficiency || '80' },
+      { key: 'amount_purchased', header: t('activities.purchasedMMBtu', 'Purchased (MMBtu)'), accessor: (row) => row.amount_purchased || '0' },
       {
         key: 'loc_emissions',
-        header: 'Location-Based (MT CO₂e)',
+        header: t('activities.locationBased', 'Location-Based (MT CO₂e)'),
         accessor: (row) => row.location_based_co2e_mt ? `${parseFloat(row.location_based_co2e_mt).toFixed(4)}` : '-'
       },
       {
         key: 'mkt_emissions',
-        header: 'Market-Based (MT CO₂e)',
+        header: t('activities.marketBased', 'Market-Based (MT CO₂e)'),
         accessor: (row) => row.market_based_co2e_mt ? `${parseFloat(row.market_based_co2e_mt).toFixed(4)}` : '-'
       },
       {
@@ -756,7 +756,7 @@ const ActivitiesListPage = () => {
     columns = [
       { key: 'reporting_period', header: t('activities.reportingPeriod', 'Reporting Period'), accessor: (row) => row.reporting_period_label || row.reporting_period || '-' },
       { key: 'source_id', header: t('activities.sourceId', 'Source ID'), accessor: (row) => row.source_id || '-' },
-      { key: 'description', header: 'Description', accessor: (row) => row.source_description || row.facility_description || row.description || '-' },
+      { key: 'description', header: t('activities.description', 'Description'), accessor: (row) => row.source_description || row.facility_description || row.description || '-' },
       {
         key: 'emissions',
         header: t('activities.emissions', 'Emissions (MT CO₂e)'),
@@ -872,7 +872,7 @@ const ActivitiesListPage = () => {
             onClick={() => periodId ? navigate(`/reports/${periodId}/activities`) : navigate('/dashboard')}
             className="text-cyan-mist hover:text-growth-green flex items-center gap-2 transition-colors text-sm"
           >
-            ← {periodId ? 'Back to Activities Checklist' : 'Back to Dashboard'}
+            ← {periodId ? t('activities.backToChecklist', 'Back to Activities Checklist') : t('nav.backToDashboard', 'Back to Dashboard')}
           </button>
         </div>
 

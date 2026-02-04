@@ -104,7 +104,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
                   {user?.firstName} {user?.lastName}
                 </p>
                 <p className="text-xs text-gray-400 truncate capitalize">
-                  {user?.role?.replace('_', ' ')}
+                  {t(`users.roles.${user?.role}`, user?.role?.replace('_', ' '))}
                 </p>
               </div>
             </div>

@@ -115,7 +115,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
 
       if (!response.ok) {
         const errorText = await response.text();
-        let errorMessage = 'Failed to create reporting period';
+        let errorMessage = t('reportingPeriods.createError', 'Failed to create reporting period');
         
         try {
           const errorData = JSON.parse(errorText);
@@ -166,7 +166,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
             <h2 className="text-2xl font-bold text-gray-900">
-              {t('reportingPeriod.createNew', 'Create New Report')}
+              {t('reportingPeriods.createNew', 'Create New Report')}
             </h2>
             <button
               onClick={handleClose}
@@ -181,7 +181,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
             {/* Period Label */}
             <div>
               <label htmlFor="label" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('reportingPeriod.label', 'Report Label')} *
+                {t('reportingPeriods.label', 'Report Label')} *
               </label>
               <input
                 type="text"
@@ -189,7 +189,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
                 name="label"
                 value={formData.label}
                 onChange={handleChange}
-                placeholder={t('reportingPeriod.labelPlaceholder', 'e.g., FY 2024')}
+                placeholder={t('reportingPeriods.labelPlaceholder', 'e.g., FY 2024')}
                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 ${
                   errors.label ? 'border-red-500' : 'border-gray-300'
                 }`}
@@ -200,7 +200,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
             {/* Period Type */}
             <div>
               <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
-                {t('reportingPeriod.type', 'Report Type')} *
+                {t('reportingPeriods.type', 'Report Type')} *
               </label>
               <select
                 id="type"
@@ -221,7 +221,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('reportingPeriod.startDate', 'Start Date')} *
+                  {t('reportingPeriods.startDate', 'Start Date')} *
                 </label>
                 <input
                   type="date"
@@ -238,7 +238,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
 
               <div>
                 <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  {t('reportingPeriod.endDate', 'End Date')} *
+                  {t('reportingPeriods.endDate', 'End Date')} *
                 </label>
                 <input
                   type="date"
@@ -258,7 +258,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
             <div>
               <div className="flex items-center justify-between mb-2">
                 <label htmlFor="reportingStandard" className="block text-sm font-medium text-gray-700">
-                  {t('reportingPeriod.standard', 'Reporting Standard')} *
+                  {t('reportingPeriods.standard', 'Reporting Standard')} *
                 </label>
                 <button
                   type="button"
@@ -331,7 +331,7 @@ const NewReportingPeriodModal = ({ isOpen, onClose, onSuccess, companyId }) => {
               >
                 {loading
                   ? t('common.creating', 'Creating...')
-                  : t('reportingPeriod.create', 'Create Report')}
+                  : t('reportingPeriods.create', 'Create Report')}
               </button>
             </div>
           </form>
