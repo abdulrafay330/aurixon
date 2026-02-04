@@ -41,7 +41,7 @@ export default function UserManagementPage() {
       setNewUser({ first_name: '', last_name: '', email: '', password: '', role: 'viewer' });
       loadUsers();
     } catch (err) {
-      setError('Failed to add user');
+      setError(err.response?.data?.error || err.response?.data?.message || 'Failed to add user');
     }
   }
 

@@ -58,7 +58,7 @@ const UserManagementPage = () => {
       });
       fetchUsers();
     } catch (err) {
-      error(err.response?.data?.message || 'Failed to add user');
+      error(err.response?.data?.error || err.response?.data?.message || 'Failed to add user');
     } finally {
       setIsAdding(false);
     }
@@ -70,7 +70,7 @@ const UserManagementPage = () => {
       success(t('users.roleUpdateSuccess', 'User role updated successfully'));
       fetchUsers();
     } catch (err) {
-      error(err.response?.data?.message || 'Failed to update role');
+      error(err.response?.data?.error || err.response?.data?.message || 'Failed to update role');
     }
   };
 
@@ -82,7 +82,7 @@ const UserManagementPage = () => {
       success(t('users.deactivateSuccess', 'User deactivated successfully'));
       fetchUsers();
     } catch (err) {
-      error(err.response?.data?.message || 'Failed to deactivate user');
+      error(err.response?.data?.error || err.response?.data?.message || 'Failed to deactivate user');
     }
   };
 
@@ -94,7 +94,7 @@ const UserManagementPage = () => {
       success(t('users.deleteSuccess', 'User removed successfully'));
       fetchUsers();
     } catch (err) {
-      error(err.response?.data?.message || 'Failed to delete user');
+      error(err.response?.data?.error || err.response?.data?.message || 'Failed to delete user');
     }
   };
 

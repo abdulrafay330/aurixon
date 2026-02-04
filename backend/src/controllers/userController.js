@@ -18,8 +18,6 @@ export async function getUserProfile(req, res) {
         first_name,
         last_name,
         language_preference,
-        timezone,
-        notifications,
         created_at,
         updated_at
       FROM users

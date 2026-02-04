@@ -62,7 +62,7 @@ export async function registerUserInSelfCompany(req, res) {
     // Check if user exists
     const userRes = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (userRes.rows.length > 0) {
-      return res.status(400).json({ error: 'User with this email already exists' });
+      return res.status(409).json({ error: 'User with this email already exists' });
     }
     const hash = await bcrypt.hash(password, 10);
     const newUser = await pool.query(
